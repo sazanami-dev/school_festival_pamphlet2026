@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 学園祭2026 デジタルパンフレット
 
-## Getting Started
+Next.js 16 (App Router / Cache Components) + PostgreSQL 18 + Drizzle ORM。Docker で開発・本番を分けて動かします。
 
-First, run the development server:
+## 構成
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Dockerfile           マルチステージ（dev / migrator / runner）
+compose.yaml         開発用: Next.js(dev, ホットリロード) + PostgreSQL(ホスト:5433)
+compose.prod.yaml    本番用: migrate(1回実行) → Next.js(standalone) + PostgreSQL(非公開)
+drizzle.config.ts    drizzle-kit 設定
+drizzle/             生成されたマイグレーションSQL（コミットする）
+src/db/schema.ts     テーブル定義（まだ空）
+src/db/index.ts      DBクライアント（getDb()）
+src/app/api/health   ヘルスチェック（DB疎通まで確認）
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 開発環境
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+http://localhost:3000 を開く。ソースはマウントされているので保存すると反映されます。
 
-## Learn More
+### テーブルを追加・変更したとき
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# 1. src/db/schema.ts を編集
+docker compose exec app npm run db:generate   # drizzle/ にSQLが生成される
+docker compose exec app npm run db:migrate
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Drizzle Studio（DBの中身をブラウザで確認）はホストから: `npm install` のあと `npm run db:studio`
+（`.env` の `DATABASE_URL` で localhost:5433 に接続します）
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### パッケージを追加したとき
 
-## Deploy on Vercel
+`node_modules` はコンテナ内の匿名ボリュームなので、追加後はイメージを作り直します。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm install <pkg>
+docker compose up -d --build --renew-anon-volumes
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 本番環境
+
+```bash
+cp .env.example .env.production   # パスワードは必ず強いものに変更
+docker compose -f compose.prod.yaml --env-file .env.production up -d --build
+```
+
+- `migrate` サービスが未適用のマイグレーションを流し、成功してから `app` が起動します（マイグレーションが無ければスキップ）
+- `app` は `output: "standalone"` の最小構成イメージで非rootユーザー実行
+- DB のポートは外部公開しません。データは `db-data` ボリュームに保存されます
+
+## DBアクセスの注意（Cache Components）
+
+`next build` 時は DB が無いので、ページでクエリを書くときはビルド時に実行されないようにします。
+
+```ts
+import { connection } from "next/server";
+import { getDb } from "@/db";
+
+export async function getItems() {
+  await connection(); // ここでプリレンダーが止まり、以降はリクエスト時に実行される
+  return getDb().select().from(items);
+}
+```
+
+取得結果をキャッシュしたい場合は、`connection()` の後に `"use cache"` + `cacheLife()` を付けた関数を呼びます。
