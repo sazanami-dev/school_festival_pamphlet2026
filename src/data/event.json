@@ -1,6 +1,7 @@
 [
   {
     "eventName": "CGスペシャリスト学科 TCコンペ表彰式",
+    "genre": "コンテスト",
     "startTime": "10:30",
     "endTime": "11:00",
     "floor": "3",
@@ -9,6 +10,7 @@
   },
   {
     "eventName": "コスプレコンテスト アピールタイム",
+    "genre": "コンテスト",
     "startTime": "11:00",
     "endTime": "11:45",
     "floor": "3",
@@ -17,6 +19,7 @@
   },
   {
     "eventName": "学園祭フリーステージ",
+    "genre": "ステージ",
     "startTime": "12:15",
     "endTime": "13:00",
     "floor": "3",
@@ -25,6 +28,7 @@
   },
   {
     "eventName": "チャリティー餅つきイベント",
+    "genre": "体験・参加型",
     "startTime": "12:00",
     "endTime": "13:00",
     "floor": "1",
@@ -33,6 +37,7 @@
   },
   {
     "eventName": "HAPPY☆MUSICライブイベント",
+    "genre": "音楽・ライブ",
     "startTime": "13:00",
     "endTime": "14:30",
     "floor": "3",
@@ -41,6 +46,7 @@
   },
   {
     "eventName": "コスプレコンテスト 表彰式",
+    "genre": "コンテスト",
     "startTime": "14:15",
     "endTime": "14:45",
     "floor": "3",
@@ -49,6 +55,7 @@
   },
   {
     "eventName": "ビンゴ大会",
+    "genre": "ゲーム・抽選",
     "startTime": "15:00",
     "endTime": "16:00",
     "floor": "3",
