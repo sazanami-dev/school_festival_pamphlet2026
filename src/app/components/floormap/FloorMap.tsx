@@ -18,16 +18,22 @@ function getFloorSvg(floor: Floor) {
 function FloorSvg({ floor }: { floor: Floor }) {
   const svg = use(getFloorSvg(floor));
   return (
+    // 親の枠いっぱいに広げ、縦横比を保ったまま全体が収まる大きさで中央に表示する
     <div
-      className="[&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
+      className="size-full [&>svg]:block [&>svg]:size-full"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );
 }
 
+/** 読み込み中に表示する、マップの枠と同じ大きさのプレースホルダー */
+export function FloorMapSkeleton() {
+  return <div className="size-full animate-pulse rounded-lg bg-muted" />;
+}
+
 export default function FloorMap({ floor }: { floor: Floor }) {
   return (
-    <Suspense fallback={<div className="aspect-[354/834] w-full animate-pulse bg-muted" />}>
+    <Suspense fallback={<FloorMapSkeleton />}>
       <FloorSvg floor={floor} />
     </Suspense>
   );
