@@ -16,6 +16,11 @@ function parseFloor(value: string | null): Floor {
   return floors.find((f) => f === n) ?? DEFAULT_FLOOR;
 }
 
+// ?floor= が無く ?room=T22 だけで開いたときは、教室ID（T22・f2-toilet-men-1）の最初の数字を階とみなす
+function floorOfRoom(room: string | null) {
+  return room?.match(/^[Tf](\d)/)?.[1] ?? null;
+}
+
 //階の見出し
 function FloorHeading({ floor }: { floor: Floor }) {
   return <h2 className="py-3 text-center text-2xl font-bold">{floor}階</h2>;
@@ -23,11 +28,26 @@ function FloorHeading({ floor }: { floor: Floor }) {
 
 function FloorTabs() {
   const searchParams = useSearchParams();
-  const floor = parseFloor(searchParams.get("floor"));
-  // タップで選んだ教室。どの階の教室かも覚えておき、別の階を表示している間は強調しない
-  // （TODO: 詳細モーダルができたら、選んだときにモーダルを開く）
-  const [selected, setSelected] = useState<{ floor: Floor; room: string } | null>(null);
-  const selectedRoom = selected?.floor === floor ? selected.room : null;
+  // 選んだ教室は URL の ?room= に保存する（共有・再読み込みしても同じ教室が強調される）
+  // 階を切り替えると ?room= は消えるので、別の階の教室が強調されることはない
+  const selectedRoom = searchParams.get("room");
+  const floor = parseFloor(searchParams.get("floor") ?? floorOfRoom(selectedRoom));
+  // 中央に拡大して表示する教室。?room= で開いたときと、出展一覧から選んだとき
+  // （マップを直接タップしたときは、すでに見えているので動かさない）
+  const [focus, setFocus] = useState(() => (selectedRoom ? { floor, room: selectedRoom } : null));
+
+  // TODO: 詳細モーダルができたら、選んだときにモーダルを開く
+  function selectRoom(room: string | null, { center = false } = {}) {
+    const params = new URLSearchParams(searchParams.toString());
+    // ?room= だけで開いていた場合も、選択を外したあと階が変わらないよう ?floor= を書いておく
+    params.set("floor", String(floor));
+    if (room) params.set("room", room);
+    else params.delete("room");
+    // 教室を選ぶたびに履歴が増えないよう、今の履歴を書き換える
+    window.history.replaceState(null, "", `?${params}`);
+    // 中央に表示しないときは前の指定も消す（後で同じ教室をタップしたとき、急に動かないように）
+    setFocus(room && center ? { floor, room } : null);
+  }
 
   function changeFloor(value: unknown) {
     const next = parseFloor(String(value));
@@ -51,7 +71,9 @@ function FloorTabs() {
             <FloorMap
               floor={f}
               selectedRoom={selectedRoom}
-              onSelectRoom={(room) => setSelected(room ? { floor: f, room } : null)}
+              // 戻るボタンで別の教室を選んでいた頃に戻ったときなどは、古い指定で動かさない
+              focusRoom={focus?.floor === f && focus.room === selectedRoom ? focus : null}
+              onSelectRoom={(room) => selectRoom(room)}
             />
           </TabsContent>
         ))}
@@ -73,7 +95,7 @@ function FloorTabs() {
           </TabsTrigger>
         ))}
       </TabsList>
-      <ExhibitionSheet floor={floor} selectedRoom={selectedRoom} onSelectRoom={(room) => setSelected({ floor, room })} />
+      <ExhibitionSheet floor={floor} selectedRoom={selectedRoom} onSelectRoom={(room) => selectRoom(room, { center: true })} />
     </Tabs>
   );
 }

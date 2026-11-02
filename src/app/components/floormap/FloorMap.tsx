@@ -1,8 +1,13 @@
 "use client";
 
-import { Suspense, use, useLayoutEffect, useRef, useSyncExternalStore } from "react";
+import { Suspense, use, useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react";
 import { Minus, Plus, RotateCcw } from "lucide-react";
-import { TransformComponent, TransformWrapper, useControls } from "react-zoom-pan-pinch";
+import {
+  TransformComponent,
+  TransformWrapper,
+  useControls,
+  type ReactZoomPanPinchRef,
+} from "react-zoom-pan-pinch";
 import { Button } from "@/components/ui/button";
 import { loadFloor, type Floor } from "./floors";
 import { cn } from "@/lib/utils";
@@ -14,6 +19,8 @@ const MAX_SCALE = 4;
 const ZOOM_STEP = 1;
 // 枠いっぱいに広げる（ライブラリの既定は中身の大きさに合わせる fit-content）
 const FILL = { width: "100%", height: "100%" };
+// 教室を中央に表示するときの最大の倍率（小さい教室も拡大しすぎず、まわりが少し見える程度）
+const FOCUS_MAX_SCALE = 2;
 // 指を離すまでの移動がこれ未満ならタップ、以上ならドラッグとみなす（px）
 const TAP_SLOP = 5;
 const ROOM_ID = /^T\d+$/;
@@ -120,15 +127,18 @@ type FloorMapProps = {
   floor: Floor;
   /** 強調表示する教室のID（例: "T22"） */
   selectedRoom: string | null;
+  /** 中央に拡大して表示する教室。新しいオブジェクトを渡すたびに、その教室へ移動する */
+  focusRoom: { room: string } | null;
   /** 出展・イベントのある教室がタップされたとき。教室以外をタップしたときは null */
   onSelectRoom: (room: string | null) => void;
 };
 
-function FloorSvg({ floor, selectedRoom, onSelectRoom }: FloorMapProps) {
+function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom }: FloorMapProps) {
   const svg = use(getFloorSvg(floor));
   const rooms = getRoomsOnFloor(floor);
   const now = useNowInMinutes();
   const containerRef = useRef<HTMLDivElement>(null);
+  const transformRef = useRef<ReactZoomPanPinchRef>(null);
   const tapStart = useRef<{ pointerId: number; x: number; y: number } | null>(null);
 
   // SVG は文字列で埋め込んでいるので、教室の色分け・バッジ・強調は DOM を直接書き換える
@@ -153,6 +163,17 @@ function FloorSvg({ floor, selectedRoom, onSelectRoom }: FloorMapProps) {
     root.append(overlay);
   }, [rooms, now, selectedRoom]);
 
+  // 指定された教室が枠の中央に来るよう拡大・移動する（教室が枠に収まる倍率。ただし FOCUS_MAX_SCALE まで）
+  useEffect(() => {
+    if (!focusRoom) return;
+    // 表示した直後は枠の大きさが決まっていないことがあるので、次の描画まで待つ
+    // （型は HTML 要素しか受け付けないが、ID で渡せば SVG の <g id="T22"> も対象にできる。無い ID なら何もしない）
+    const id = requestAnimationFrame(() =>
+      transformRef.current?.zoomToElement(focusRoom.room, { maxScale: FOCUS_MAX_SCALE }),
+    );
+    return () => cancelAnimationFrame(id);
+  }, [focusRoom]);
+
   function handlePointerDown(e: React.PointerEvent) {
     // 2本目の指（ピンチ）が触れたらタップではない
     tapStart.current = e.isPrimary ? { pointerId: e.pointerId, x: e.clientX, y: e.clientY } : null;
@@ -173,7 +194,7 @@ function FloorSvg({ floor, selectedRoom, onSelectRoom }: FloorMapProps) {
   return (
     // ピンチ・ダブルタップ・ドラッグで拡大縮小と移動ができる
     // 階ごとに別のインスタンスになるので、階を切り替えると拡大率と位置はリセットされる
-    <TransformWrapper minScale={MIN_SCALE} maxScale={MAX_SCALE} doubleClick={{ step: ZOOM_STEP }}>
+    <TransformWrapper ref={transformRef} minScale={MIN_SCALE} maxScale={MAX_SCALE} doubleClick={{ step: ZOOM_STEP }}>
       <div className="relative size-full">
         <TransformComponent wrapperStyle={FILL} contentStyle={FILL}>
           {/* 枠いっぱいに広げ、縦横比を保ったまま全体が収まる大きさで中央に表示する */}
