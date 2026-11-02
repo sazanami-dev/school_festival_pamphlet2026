@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +23,10 @@ function FloorHeading({ floor }: { floor: Floor }) {
 function FloorTabs() {
   const searchParams = useSearchParams();
   const floor = parseFloor(searchParams.get("floor"));
+  // タップで選んだ教室。どの階の教室かも覚えておき、別の階を表示している間は強調しない
+  // （TODO: 詳細モーダルができたら、選んだときにモーダルを開く）
+  const [selected, setSelected] = useState<{ floor: Floor; room: string } | null>(null);
+  const selectedRoom = selected?.floor === floor ? selected.room : null;
 
   function changeFloor(value: unknown) {
     const next = parseFloor(String(value));
@@ -42,7 +46,11 @@ function FloorTabs() {
       <div className="min-h-0 flex-1 px-4">
         {floors.map((f) => (
           <TabsContent key={f} value={f} className="size-full">
-            <FloorMap floor={f} />
+            <FloorMap
+              floor={f}
+              selectedRoom={selectedRoom}
+              onSelectRoom={(room) => setSelected(room ? { floor: f, room } : null)}
+            />
           </TabsContent>
         ))}
       </div>

@@ -1,0 +1,93 @@
+// マップの教室（SVGの <g id="T22">）と、出展・イベントのデータを結び付ける
+// 紐付けは「階」と「SVGのID = JSON の location」が一致するかで判定する
+import exhibitionData from "@/data/ExhibitionInfo.json";
+import eventData from "@/data/event.json";
+import type { Floor } from "./floors";
+
+export type Exhibition = {
+  id: string;
+  exhibitionName: string;
+  genre: string[];
+  floor: string;
+  location: string;
+  startTime: string | null;
+  endTime: string | null;
+  description: string;
+};
+
+export type FestivalEvent = {
+  id: string;
+  eventName: string;
+  genre: string[];
+  startTime: string;
+  endTime: string;
+  floor: string;
+  location: string;
+  description: string;
+};
+
+export type RoomInfo = {
+  exhibitions: Exhibition[];
+  events: FestivalEvent[];
+};
+
+const exhibitions: Exhibition[] = exhibitionData;
+const events: FestivalEvent[] = eventData;
+
+/** "T51,T53" のように複数の場所が書かれていたら分ける */
+function splitLocation(location: string) {
+  return location
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** 階 → 教室ID → その教室の出展・イベント の対応表 */
+function buildRoomIndex() {
+  const index = new Map<string, Map<string, RoomInfo>>();
+  const roomOf = (floor: string, room: string) => {
+    let rooms = index.get(floor);
+    if (!rooms) index.set(floor, (rooms = new Map()));
+    let info = rooms.get(room);
+    if (!info) rooms.set(room, (info = { exhibitions: [], events: [] }));
+    return info;
+  };
+  for (const ex of exhibitions) {
+    for (const room of splitLocation(ex.location)) roomOf(ex.floor, room).exhibitions.push(ex);
+  }
+  for (const ev of events) {
+    for (const room of splitLocation(ev.location)) roomOf(ev.floor, room).events.push(ev);
+  }
+  return index;
+}
+
+const roomIndex = buildRoomIndex();
+const noRooms: ReadonlyMap<string, RoomInfo> = new Map();
+
+/** その階で、出展かイベントがある教室の一覧 */
+export function getRoomsOnFloor(floor: Floor): ReadonlyMap<string, RoomInfo> {
+  return roomIndex.get(String(floor)) ?? noRooms;
+}
+
+/** "10:30" → 630（0時からの分） */
+function toMinutes(time: string) {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/** 日本時間の今の時刻を 0時からの分で返す（学園祭当日に使う前提なので日付は見ない） */
+export function nowInMinutes(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tokyo",
+    hour: "numeric",
+    minute: "numeric",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return get("hour") * 60 + get("minute");
+}
+
+/** イベントが今開催中か（開始時刻ちょうどから、終了時刻の直前まで） */
+export function isOngoing(event: FestivalEvent, now: number) {
+  return toMinutes(event.startTime) <= now && now < toMinutes(event.endTime);
+}
