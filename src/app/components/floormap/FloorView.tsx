@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ExhibitionSheet, { SHEET_PEEK } from "./ExhibitionSheet";
 import FloorMap, { FloorMapSkeleton } from "./FloorMap";
 import { floors, type Floor } from "./floors";
 
@@ -40,7 +41,8 @@ function FloorTabs() {
   }
 
   return (
-    <Tabs value={floor} onValueChange={changeFloor} className="min-h-0 flex-1 gap-0">
+    // 下から出ている出展一覧（ボトムシート）に階切替ボタンが隠れないよう、その分の余白を空ける
+    <Tabs value={floor} onValueChange={changeFloor} className="min-h-0 flex-1 gap-0" style={{ paddingBottom: SHEET_PEEK }}>
       <FloorHeading floor={floor} />
       {/* 残りの高さをマップの枠にする。縦長のマップも全体が収まるよう縮小して表示する */}
       <div className="min-h-0 flex-1 px-4">
@@ -71,6 +73,7 @@ function FloorTabs() {
           </TabsTrigger>
         ))}
       </TabsList>
+      <ExhibitionSheet floor={floor} selectedRoom={selectedRoom} onSelectRoom={(room) => setSelected({ floor, room })} />
     </Tabs>
   );
 }
@@ -78,7 +81,7 @@ function FloorTabs() {
 //読み込み中に表示する枠
 function FloorTabsSkeleton() {
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col" style={{ paddingBottom: SHEET_PEEK }}>
       <FloorHeading floor={DEFAULT_FLOOR} />
       <div className="min-h-0 flex-1 px-4">
         <FloorMapSkeleton />

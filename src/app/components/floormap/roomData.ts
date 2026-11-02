@@ -69,6 +69,21 @@ export function getRoomsOnFloor(floor: Floor): ReadonlyMap<string, RoomInfo> {
   return roomIndex.get(String(floor)) ?? noRooms;
 }
 
+/** 教室IDの順（T9 → T10 のように数字として比べる） */
+const byLocation = new Intl.Collator("ja", { numeric: true }).compare;
+
+/** その階の出展を教室順に並べたもの */
+export function getExhibitionsOnFloor(floor: Floor): Exhibition[] {
+  return exhibitions
+    .filter((ex) => ex.floor === String(floor))
+    .sort((a, b) => byLocation(a.location, b.location));
+}
+
+/** 出展の教室IDの一覧（"T51,T53" なら ["T51", "T53"]） */
+export function locationsOf(exhibition: Exhibition) {
+  return splitLocation(exhibition.location);
+}
+
 /** "10:30" → 630（0時からの分） */
 function toMinutes(time: string) {
   const [h, m] = time.split(":").map(Number);
