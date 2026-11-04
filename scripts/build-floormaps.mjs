@@ -59,7 +59,10 @@ function tidyIdsPlugin(floor, referenced) {
 
 function convert(floor, raw) {
   const referenced = collectReferencedIds(raw);
-  const { data } = optimize(raw, {
+  // 日本語のレイヤー名は &#195;&#166;… のような文字化けした ID になる。数が多いと svgo が読み込めないので先に消す
+  // （どこからも参照されず、tidyIds でも消す ID）
+  const cleaned = raw.replace(/\sid="[^"]*&#[^"]*"/g, "");
+  const { data } = optimize(cleaned, {
     multipass: true,
     plugins: [
       tidyIdsPlugin(floor, referenced),
