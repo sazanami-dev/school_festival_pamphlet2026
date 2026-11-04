@@ -10,6 +10,8 @@ services:
       - "${APP_PORT:-3000}:3000"
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      # Windows でファイル変更が反映されない対策（ポーリング間隔ms）。0 以下/空で無効
+      NEXT_POLL_INTERVAL_MS: ${NEXT_POLL_INTERVAL_MS:-1000}
     volumes:
       - .:/app
       # ホスト(macOS)の node_modules / .next でコンテナ側を上書きしない
