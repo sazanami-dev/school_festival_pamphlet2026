@@ -153,10 +153,15 @@ function matchesQuery(searchText: string, query: string): boolean {
   return terms.every((term) => searchText.includes(term));
 }
 
-/** マップ画面の /?floor=2&room=T28 へのリンク */
+/**
+ * マップ画面（ホーム）へのリンク。例: /?floor=2&room=T28
+ * マップは ?floor= の階を開く。?room= は教室の強調用（マップ側が対応したら使われる）。
+ * 「T51,T53」のように複数書かれている場所は、マップの教室IDに合わせて最初の1つを渡す。
+ */
 function mapHref(item: Exhibition): string {
   const params = new URLSearchParams({ floor: item.floor });
-  if (item.location) params.set("room", item.location);
+  const room = item.location.split(",")[0].trim();
+  if (room) params.set("room", room);
   return `/?${params.toString()}`;
 }
 
