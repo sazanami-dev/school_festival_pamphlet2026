@@ -49,6 +49,16 @@ function FloorTabs() {
     if (linkedRoom) setSelected({ floor, room: linkedRoom, center: true });
   }
 
+  // 階が変わったら、新しい階のマップをスライドさせて入れる。上の階は上から、下の階は下から入る
+  // （ボタン・スワイプ・戻るボタンのどれで変わっても同じ。最初に開いたときは動かさない）
+  const [shown, setShown] = useState<{ floor: Floor; enterFrom: "top" | "bottom" | null }>({
+    floor,
+    enterFrom: null,
+  });
+  if (shown.floor !== floor) {
+    setShown({ floor, enterFrom: floor > shown.floor ? "top" : "bottom" });
+  }
+
   // TODO: 詳細モーダルができたら、選んだときにモーダルを開く
   function selectRoom(room: string | null, { center = false } = {}) {
     // 毎回新しいオブジェクトにするので、同じ教室をもう一度選んでも中央に戻る
@@ -63,6 +73,12 @@ function FloorTabs() {
       // 履歴は増やさず、今の履歴を書き換える
       window.history.replaceState(null, "", `?${params}`);
     }
+  }
+
+  // 指を下に動かすと上の階へ、上に動かすと下の階へ。一番上・一番下の階では何もしない
+  function swipeFloor(direction: "up" | "down") {
+    const next = floor + (direction === "down" ? 1 : -1);
+    if (floors.some((f) => f === next)) changeFloor(next);
   }
 
   function changeFloor(value: unknown) {
@@ -106,15 +122,26 @@ function FloorTabs() {
             </TabsTrigger>
           ))}
         </TabsList>
-        {/* 残りの幅と高さをマップの枠にする。縦長のマップも全体が収まるよう縮小して表示する */}
-        <div className="min-h-0 min-w-0 flex-1">
+        {/* 残りの幅と高さをマップの枠にする。縦長のマップも全体が収まるよう縮小して表示する
+            階を切り替えるときにスライドしてくるマップが、見出しやボトムシートにはみ出さないよう切り取る */}
+        <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
           {floors.map((f) => (
-            <TabsContent key={f} value={f} className="size-full">
+            <TabsContent
+              key={f}
+              value={f}
+              className={cn(
+                "size-full",
+                shown.enterFrom && "animate-in duration-200 fade-in-0 motion-reduce:animate-none",
+                shown.enterFrom === "bottom" && "slide-in-from-bottom-16",
+                shown.enterFrom === "top" && "slide-in-from-top-16",
+              )}
+            >
               <FloorMap
                 floor={f}
                 selectedRoom={selectedRoom}
                 focusRoom={selected?.floor === f && selected.center ? selected : null}
                 onSelectRoom={(room) => selectRoom(room)}
+                onSwipe={swipeFloor}
               />
             </TabsContent>
           ))}

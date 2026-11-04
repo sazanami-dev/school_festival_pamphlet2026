@@ -23,6 +23,8 @@ const FILL = { width: "100%", height: "100%" };
 const FOCUS_MAX_SCALE = 2;
 // 指を離すまでの移動がこれ未満ならタップ、以上ならドラッグとみなす（px）
 const TAP_SLOP = 5;
+// 等倍のとき、縦にこれ以上（px）動かして離したら、階を切り替えるスワイプとみなす
+const SWIPE_DISTANCE = 60;
 const ROOM_ID = /^T\d+$/;
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -131,9 +133,11 @@ type FloorMapProps = {
   focusRoom: { room: string } | null;
   /** 出展・イベントのある教室がタップされたとき。教室以外をタップしたときは null */
   onSelectRoom: (room: string | null) => void;
+  /** 等倍のマップを上下にスワイプしたとき。up は指を上に動かしたとき */
+  onSwipe: (direction: "up" | "down") => void;
 };
 
-function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom }: FloorMapProps) {
+function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom, onSwipe }: FloorMapProps) {
   const svg = use(getFloorSvg(floor));
   const rooms = getRoomsOnFloor(floor);
   const now = useNowInMinutes();
@@ -175,7 +179,7 @@ function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom }: FloorMapProp
   }, [focusRoom]);
 
   function handlePointerDown(e: React.PointerEvent) {
-    // 2本目の指（ピンチ）が触れたらタップではない
+    // 2本目の指（ピンチ）が触れたら、タップでもスワイプでもない
     tapStart.current = e.isPrimary ? { pointerId: e.pointerId, x: e.clientX, y: e.clientY } : null;
   }
 
@@ -183,8 +187,18 @@ function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom }: FloorMapProp
     const start = tapStart.current;
     tapStart.current = null;
     if (!start || start.pointerId !== e.pointerId) return;
-    // ドラッグでマップを動かした後に指を離したときは、教室を選ばない
-    if (Math.hypot(e.clientX - start.x, e.clientY - start.y) >= TAP_SLOP) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.hypot(dx, dy) >= TAP_SLOP) {
+      // 等倍のマップは枠に収まっていて動かないので、上下のドラッグを階の切り替えに使う
+      // （拡大中のドラッグはマップの移動。斜めや横の動きは切り替えない）
+      const scale = transformRef.current?.instance.state.scale ?? MIN_SCALE;
+      if (scale <= MIN_SCALE && Math.abs(dy) >= SWIPE_DISTANCE && Math.abs(dy) > Math.abs(dx) * 2) {
+        onSwipe(dy < 0 ? "up" : "down");
+      }
+      // ドラッグでマップを動かした後に指を離したときは、教室を選ばない
+      return;
+    }
     const room = (e.target as Element).closest<SVGGElement>(
       'g[data-room-state="content"], g[data-room-state="live"]',
     );
@@ -200,7 +214,8 @@ function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom }: FloorMapProp
           {/* 枠いっぱいに広げ、縦横比を保ったまま全体が収まる大きさで中央に表示する */}
           <div
             ref={containerRef}
-            className={cn("size-full [&>svg]:block [&>svg]:size-full", ROOM_STYLES)}
+            // touch-none: ブラウザのスクロールや引っ張って更新を止め、指の動きをすべてマップで扱う
+            className={cn("size-full touch-none [&>svg]:block [&>svg]:size-full", ROOM_STYLES)}
             onPointerDown={handlePointerDown}
             onPointerUp={handlePointerUp}
             onPointerCancel={() => (tapStart.current = null)}
