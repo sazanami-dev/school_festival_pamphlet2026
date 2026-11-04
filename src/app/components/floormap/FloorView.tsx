@@ -34,20 +34,11 @@ function FloorTabs() {
   const linkedRoom = searchParams.get("room");
   const floor = parseFloor(searchParams.get("floor") ?? floorOfRoom(linkedRoom));
 
-  // 選んだ教室。どの階の教室かも覚えておき、別の階を表示している間は強調しない
+  // 選んだ教室。階を切り替えたら消す（戻ってきたときに、前の教室へ移動しないように）
   // center: 中央に拡大して表示するか。?room= で開いたときと出展一覧から選んだときだけ
   // （マップを直接タップしたときは、すでに見えているので動かさない）
-  type Selection = { floor: Floor; room: string; center: boolean };
+  type Selection = { room: string; center: boolean };
   const [selected, setSelected] = useState<Selection | null>(null);
-  const selectedRoom = selected?.floor === floor ? selected.room : null;
-
-  // ?room= が新しく指定されたら（最初に開いたときも含む）、その教室を選ぶ
-  // URL の変化に合わせて state を直す、React の「描画中に state を調整する」書き方
-  const [prevLinkedRoom, setPrevLinkedRoom] = useState<string | null>(null);
-  if (linkedRoom !== prevLinkedRoom) {
-    setPrevLinkedRoom(linkedRoom);
-    if (linkedRoom) setSelected({ floor, room: linkedRoom, center: true });
-  }
 
   // 階が変わったら、新しい階のマップをスライドさせて入れる。上の階は上から、下の階は下から入る
   // （ボタン・スワイプ・戻るボタンのどれで変わっても同じ。最初に開いたときは動かさない）
@@ -57,12 +48,24 @@ function FloorTabs() {
   });
   if (shown.floor !== floor) {
     setShown({ floor, enterFrom: floor > shown.floor ? "top" : "bottom" });
+    setSelected(null);
   }
+
+  // ?room= が新しく指定されたら（最初に開いたときも含む）、その教室を選ぶ
+  // URL の変化に合わせて state を直す、React の「描画中に state を調整する」書き方
+  // 階の変更と同時のときは、この指定を残すため、選択を消す処理より後に書く
+  const [prevLinkedRoom, setPrevLinkedRoom] = useState<string | null>(null);
+  if (linkedRoom !== prevLinkedRoom) {
+    setPrevLinkedRoom(linkedRoom);
+    if (linkedRoom) setSelected({ room: linkedRoom, center: true });
+  }
+
+  const selectedRoom = selected?.room ?? null;
 
   // TODO: 詳細モーダルができたら、選んだときにモーダルを開く
   function selectRoom(room: string | null, { center = false } = {}) {
     // 毎回新しいオブジェクトにするので、同じ教室をもう一度選んでも中央に戻る
-    setSelected(room ? { floor, room, center } : null);
+    setSelected(room ? { room, center } : null);
     // ?room= は開いたときだけの指定なので、自分で選び直したら URL から消す
     // （残しておくと、再読み込みしたときに前の教室へ移動してしまう）
     if (linkedRoom) {
@@ -139,7 +142,7 @@ function FloorTabs() {
               <FloorMap
                 floor={f}
                 selectedRoom={selectedRoom}
-                focusRoom={selected?.floor === f && selected.center ? selected : null}
+                focusRoom={selected?.center ? selected : null}
                 onSelectRoom={(room) => selectRoom(room)}
                 onSwipe={swipeFloor}
               />
