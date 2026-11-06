@@ -1,7 +1,46 @@
 "use client";
 
-import { Suspense, use } from "react";
+import { Suspense, use, useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react";
+import { Minus, Plus, RotateCcw } from "lucide-react";
+import {
+  TransformComponent,
+  TransformWrapper,
+  useControls,
+  type ReactZoomPanPinchRef,
+} from "react-zoom-pan-pinch";
+import { Button } from "@/components/ui/button";
 import { loadFloor, type Floor } from "./floors";
+import { cn } from "@/lib/utils";
+import { getRoomsOnFloor, isOngoing, nowInMinutes, type RoomInfo } from "./roomData";
+
+const MIN_SCALE = 1;
+const MAX_SCALE = 4;
+// ダブルタップ・＋／−ボタン1回で増減する倍率（1倍 → 2倍）
+const ZOOM_STEP = 1;
+// 枠いっぱいに広げる（ライブラリの既定は中身の大きさに合わせる fit-content）
+const FILL = { width: "100%", height: "100%" };
+// 教室を中央に表示するときの最大の倍率（小さい教室も拡大しすぎず、まわりが少し見える程度）
+const FOCUS_MAX_SCALE = 2;
+// 指を離すまでの移動がこれ未満ならタップ、以上ならドラッグとみなす（px）
+const TAP_SLOP = 5;
+// 等倍のとき、縦にこれ以上（px）動かして離したら、階を切り替えるスワイプとみなす
+const SWIPE_DISTANCE = 60;
+const ROOM_ID = /^T\d+$/;
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/*
+ * 教室の色分け
+ * SVG の <g id="T22"> に data-room-state を付け、その最初の子要素（教室の背景。<path> か <rect>）の色を変える
+ *   content : 出展・イベントがある教室（タップできる）
+ *   live    : イベント開催中の教室（色は content と同じ。「開催中」バッジは別に描く）
+ *   empty   : 出展が無い教室（グレー・タップしても反応しない）
+ * ※ next.config.ts の設定で CSS Modules が使えないため、Tailwind の任意セレクタで書いている
+ */
+const ROOM_STYLES = cn(
+  "[&_g[data-room-state=content]>:first-child]:fill-amber-200 [&_g[data-room-state=content]]:cursor-pointer",
+  "[&_g[data-room-state=live]>:first-child]:fill-amber-200 [&_g[data-room-state=live]]:cursor-pointer",
+  "[&_g[data-room-state=empty]>:first-child]:fill-gray-200",
+);
 
 // 同じ階を何度表示しても読み込みは1回だけにする
 const svgCache = new Map<Floor, Promise<string>>();
@@ -15,14 +54,177 @@ function getFloorSvg(floor: Floor) {
   return promise;
 }
 
-function FloorSvg({ floor }: { floor: Floor }) {
-  const svg = use(getFloorSvg(floor));
+/** 右下の＋／−／リセットボタン（片手操作・PC用） */
+function ZoomControls() {
+  const { zoomIn, zoomOut, resetTransform } = useControls();
   return (
-    // 親の枠いっぱいに広げ、縦横比を保ったまま全体が収まる大きさで中央に表示する
-    <div
-      className="size-full [&>svg]:block [&>svg]:size-full"
-      dangerouslySetInnerHTML={{ __html: svg }}
-    />
+    <div className="absolute right-2 bottom-2 flex flex-col gap-1">
+      <Button variant="outline" size="icon-lg" aria-label="拡大" onClick={() => zoomIn(ZOOM_STEP)}>
+        <Plus />
+      </Button>
+      <Button variant="outline" size="icon-lg" aria-label="縮小" onClick={() => zoomOut(ZOOM_STEP)}>
+        <Minus />
+      </Button>
+      <Button variant="outline" size="icon-lg" aria-label="元の大きさに戻す" onClick={() => resetTransform()}>
+        <RotateCcw />
+      </Button>
+    </div>
+  );
+}
+
+/** 30秒ごとに今の時刻（0時からの分）を返す。サーバーでの描画中は null */
+function subscribeClock(onChange: () => void) {
+  const id = setInterval(onChange, 30_000);
+  return () => clearInterval(id);
+}
+
+function useNowInMinutes() {
+  return useSyncExternalStore(subscribeClock, nowInMinutes, () => null);
+}
+
+function svgElement(tag: string, attrs: Record<string, string | number>, text?: string) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, String(value));
+  if (text) el.textContent = text;
+  return el;
+}
+
+/** 教室の背景（最初の子要素）の位置と大きさ */
+function roomBox(room: SVGGElement) {
+  return room.querySelector<SVGGraphicsElement>(":scope > :first-child")?.getBBox() ?? null;
+}
+
+/** 選んだ教室を青い太枠で囲む（設備には枠線が無いものもあるので、元の線ではなく新しく描く） */
+function drawSelection(layer: SVGGElement, room: SVGGElement) {
+  const box = roomBox(room);
+  if (!box) return;
+  layer.append(
+    svgElement("rect", { x: box.x, y: box.y, width: box.width, height: box.height, fill: "none", stroke: "#2563eb", "stroke-width": 4 }),
+  );
+}
+
+/** 教室の左上に「開催中」、右上に出展の件数（2件以上のとき）のバッジを描く */
+function drawBadges(layer: SVGGElement, room: SVGGElement, info: RoomInfo, live: boolean) {
+  const box = roomBox(room);
+  if (!box) return;
+  const label = { fill: "#fff", "font-weight": 700, "text-anchor": "middle", "dominant-baseline": "central" };
+  // 等倍表示（スマホで約0.5倍に縮小される）でも見えるよう、SVG の座標で大きめに描く
+  if (live) {
+    layer.append(
+      svgElement("rect", { x: box.x + 4, y: box.y + 4, width: 52, height: 22, rx: 11, fill: "#dc2626" }),
+      svgElement("text", { ...label, x: box.x + 30, y: box.y + 15, "font-size": 13 }, "開催中"),
+    );
+  }
+  if (info.exhibitions.length > 1) {
+    const cx = box.x + box.width - 15;
+    const cy = box.y + 15;
+    layer.append(
+      svgElement("circle", { cx, cy, r: 11, fill: "#2563eb" }),
+      svgElement("text", { ...label, x: cx, y: cy, "font-size": 14 }, String(info.exhibitions.length)),
+    );
+  }
+}
+
+type FloorMapProps = {
+  floor: Floor;
+  /** 強調表示する教室のID（例: "T22"） */
+  selectedRoom: string | null;
+  /** 中央に拡大して表示する教室。新しいオブジェクトを渡すたびに、その教室へ移動する */
+  focusRoom: { room: string } | null;
+  /** 出展・イベントのある教室がタップされたとき。教室以外をタップしたときは null */
+  onSelectRoom: (room: string | null) => void;
+  /** 等倍のマップを上下にスワイプしたとき。up は指を上に動かしたとき */
+  onSwipe: (direction: "up" | "down") => void;
+};
+
+function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom, onSwipe }: FloorMapProps) {
+  const svg = use(getFloorSvg(floor));
+  const rooms = getRoomsOnFloor(floor);
+  const now = useNowInMinutes();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const transformRef = useRef<ReactZoomPanPinchRef>(null);
+  const tapStart = useRef<{ pointerId: number; x: number; y: number } | null>(null);
+
+  // SVG は文字列で埋め込んでいるので、教室の色分け・バッジ・強調は DOM を直接書き換える
+  useLayoutEffect(() => {
+    const root = containerRef.current?.querySelector("svg");
+    if (!root) return;
+    root.querySelector(":scope > g[data-overlay]")?.remove();
+    const overlay = svgElement("g", { "data-overlay": "", "pointer-events": "none" }) as SVGGElement;
+
+    for (const g of root.querySelectorAll<SVGGElement>("g[id]")) {
+      const info = rooms.get(g.id);
+      if (info) {
+        const live = now !== null && info.events.some((ev) => isOngoing(ev, now));
+        g.dataset.roomState = live ? "live" : "content";
+        if (g.id === selectedRoom) drawSelection(overlay, g);
+        drawBadges(overlay, g, info, live);
+      } else if (ROOM_ID.test(g.id)) {
+        g.dataset.roomState = "empty";
+      }
+    }
+    // 枠とバッジは教室より手前に表示したいので最後に追加する
+    root.append(overlay);
+  }, [rooms, now, selectedRoom]);
+
+  // 指定された教室が枠の中央に来るよう拡大・移動する（教室が枠に収まる倍率。ただし FOCUS_MAX_SCALE まで）
+  useEffect(() => {
+    if (!focusRoom) return;
+    // 表示した直後は枠の大きさが決まっていないことがあるので、次の描画まで待つ
+    // （型は HTML 要素しか受け付けないが、ID で渡せば SVG の <g id="T22"> も対象にできる。無い ID なら何もしない）
+    const id = requestAnimationFrame(() =>
+      transformRef.current?.zoomToElement(focusRoom.room, { maxScale: FOCUS_MAX_SCALE }),
+    );
+    return () => cancelAnimationFrame(id);
+  }, [focusRoom]);
+
+  function handlePointerDown(e: React.PointerEvent) {
+    // 2本目の指（ピンチ）が触れたら、タップでもスワイプでもない
+    tapStart.current = e.isPrimary ? { pointerId: e.pointerId, x: e.clientX, y: e.clientY } : null;
+  }
+
+  function handlePointerUp(e: React.PointerEvent) {
+    const start = tapStart.current;
+    tapStart.current = null;
+    if (!start || start.pointerId !== e.pointerId) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.hypot(dx, dy) >= TAP_SLOP) {
+      // 等倍のマップは枠に収まっていて動かないので、上下のドラッグを階の切り替えに使う
+      // （拡大中のドラッグはマップの移動。斜めや横の動きは切り替えない）
+      const scale = transformRef.current?.instance.state.scale ?? MIN_SCALE;
+      if (scale <= MIN_SCALE && Math.abs(dy) >= SWIPE_DISTANCE && Math.abs(dy) > Math.abs(dx) * 2) {
+        onSwipe(dy < 0 ? "up" : "down");
+      }
+      // ドラッグでマップを動かした後に指を離したときは、教室を選ばない
+      return;
+    }
+    const room = (e.target as Element).closest<SVGGElement>(
+      'g[data-room-state="content"], g[data-room-state="live"]',
+    );
+    onSelectRoom(room?.id ?? null);
+  }
+
+  return (
+    // ピンチ・ダブルタップ・ドラッグで拡大縮小と移動ができる
+    // 階ごとに別のインスタンスになるので、階を切り替えると拡大率と位置はリセットされる
+    <TransformWrapper ref={transformRef} minScale={MIN_SCALE} maxScale={MAX_SCALE} doubleClick={{ step: ZOOM_STEP }}>
+      <div className="relative size-full">
+        <TransformComponent wrapperStyle={FILL} contentStyle={FILL}>
+          {/* 枠いっぱいに広げ、縦横比を保ったまま全体が収まる大きさで中央に表示する */}
+          <div
+            ref={containerRef}
+            // touch-none: ブラウザのスクロールや引っ張って更新を止め、指の動きをすべてマップで扱う
+            className={cn("size-full touch-none [&>svg]:block [&>svg]:size-full", ROOM_STYLES)}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={() => (tapStart.current = null)}
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+        </TransformComponent>
+        <ZoomControls />
+      </div>
+    </TransformWrapper>
   );
 }
 
@@ -31,10 +233,10 @@ export function FloorMapSkeleton() {
   return <div className="size-full animate-pulse rounded-lg bg-muted" />;
 }
 
-export default function FloorMap({ floor }: { floor: Floor }) {
+export default function FloorMap(props: FloorMapProps) {
   return (
     <Suspense fallback={<FloorMapSkeleton />}>
-      <FloorSvg floor={floor} />
+      <FloorSvg {...props} />
     </Suspense>
   );
 }
