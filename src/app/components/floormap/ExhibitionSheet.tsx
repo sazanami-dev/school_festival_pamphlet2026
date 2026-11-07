@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { BOTTOM_NAV_SPACE } from "@/components/BottomNav";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import type { Floor } from "./floors";
 import { getExhibitionsOnFloor, locationsOf, type Exhibition } from "./roomData";
 
 // 閉じたとき（見出しだけ）・半分・ほぼ全画面 の3段階
 // ページ側はシートの見出しで隠れないよう、一番下に SHEET_PEEK の余白を空けておく
-export const SHEET_PEEK = "80px";
+// 閉じたときも見出しが下のナビゲーションバーより上に出るよう、バーの分だけ高くする
+export const SHEET_PEEK = `${80 + BOTTOM_NAV_SPACE}px`;
 const SNAP_POINTS = [SHEET_PEEK, 0.45, 0.85];
 
 type SnapPoint = (typeof SNAP_POINTS)[number];
@@ -71,8 +73,8 @@ export default function ExhibitionSheet({ floor, selectedRoom, onSelectRoom }: E
           <DrawerTitle className="text-lg font-bold">{floor}階の出展</DrawerTitle>
           <span className="text-sm text-muted-foreground">{exhibitions.length}件</span>
         </DrawerHeader>
-        {/* シートが途中の高さで止まっていても、一覧の最後まで見えるよう下に隠れている分の余白を足す */}
-        <ul className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(var(--sheet-hidden)+1rem)]">
+        {/* シートが途中の高さで止まっていても、一覧の最後まで見えるよう下に隠れている分とナビゲーションバーの分の余白を足す */}
+        <ul className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(var(--sheet-hidden)+var(--bottom-nav-space)+1rem)]">
           {exhibitions.map((ex) => {
             const rooms = locationsOf(ex);
             const selected = selectedRoom !== null && rooms.includes(selectedRoom);

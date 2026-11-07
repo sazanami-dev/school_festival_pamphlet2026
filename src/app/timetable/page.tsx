@@ -110,7 +110,7 @@ export default function Timetable() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6 pb-(--bottom-nav-space)">
       {isDevelopment && !isEventDay && (
         <button
           onClick={() => setDebugMode(!debugMode)}
@@ -281,7 +281,7 @@ export default function Timetable() {
       {showTimeFeatures && (
         <button
           onClick={scrollToElement}
-          className="fixed bottom-6 right-6 z-40 rounded-full bg-blue-600 px-6 py-3 font-bold text-white shadow-lg transition hover:bg-blue-700 active:scale-95"
+          className="fixed bottom-[calc(var(--bottom-nav-space)+0.5rem)] right-6 z-40 rounded-full bg-blue-600 px-6 py-3 font-bold text-white shadow-lg transition hover:bg-blue-700 active:scale-95"
         >
           今の時間へ
         </button>
