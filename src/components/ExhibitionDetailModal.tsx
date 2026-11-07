@@ -19,6 +19,8 @@ export type Exhibition = {
   genre: string[];
   floor: string;
   location: string;
+  /** location が教室番号ではなく SVG の ID のときの表示名（例: "飲食店エリア"） */
+  locationName?: string;
   /** 設定がない場合は null */
   startTime: string | null;
   /** 設定がない場合は null */
@@ -94,8 +96,9 @@ export function formatTimeRange(start: string | null, end: string | null): strin
 }
 
 /** 「2F T28」の形にする。場所が空なら「2F」だけ */
-export function formatPlace(item: { floor: string; location: string }): string {
-  return item.location ? `${item.floor}F ${item.location}` : `${item.floor}F`;
+export function formatPlace(item: { floor: string; location: string; locationName?: string }): string {
+  const place = item.locationName ?? item.location;
+  return place ? `${item.floor}F ${place}` : `${item.floor}F`;
 }
 
 /** ジャンルの数だけ色付きバッジを並べる */
