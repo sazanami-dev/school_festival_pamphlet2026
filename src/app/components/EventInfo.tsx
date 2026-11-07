@@ -1030,7 +1030,7 @@ function PositionShell({
         <div aria-hidden style={{ height: barHeight }} />
         <div
           ref={barRef}
-          className={cn("fixed inset-x-0 bottom-0 z-40", className)}
+          className={cn("fixed inset-x-0 bottom-(--bottom-nav-space) z-40", className)}
         >
           {children}
         </div>
@@ -1092,7 +1092,7 @@ function DisplaySettings({
     <div
       ref={rootRef}
       className="fixed right-3 z-50 flex flex-col items-end gap-2"
-      style={{ bottom: bottomOffset + 12 }}
+      style={{ bottom: `calc(var(--bottom-nav-space) + ${bottomOffset + 12}px)` }}
     >
       {open && (
         <div
