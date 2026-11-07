@@ -94,75 +94,30 @@ function roomBox(room: SVGGElement) {
   return room.querySelector<SVGGraphicsElement>(":scope > :first-child")?.getBBox() ?? null;
 }
 
-/** あとから描かれる（この教室より手前に出る）区画の位置と大きさ */
-function boxesDrawnOver(room: SVGGElement) {
-  const boxes: DOMRect[] = [];
-  for (const other of room.ownerSVGElement?.querySelectorAll<SVGGElement>("g[id]") ?? []) {
-    const drawnLater = room.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_FOLLOWING;
-    // f1-south のように区画をまとめているだけのグループは見ない
-    if (!drawnLater || other.firstElementChild?.tagName === "g") continue;
-    const box = roomBox(other);
-    if (box) boxes.push(box);
-  }
-  return boxes;
-}
-
-/**
- * 教室の見えている範囲。あとから描かれる別の区画に上側が隠れている教室は、その分を除く
- * （例: 1階の食販スペースは、上側が立入不可の区画の裏に入っている）
- */
-function visibleBox(room: SVGGElement) {
-  const box = roomBox(room);
-  if (!box) return null;
-  let top = box.y;
-  const bottom = box.y + box.height;
-  for (const o of boxesDrawnOver(room)) {
-    const coversWidth = o.x <= box.x + 1 && o.x + o.width >= box.x + box.width - 1;
-    const coversTop = o.y <= top + 1 && o.y + o.height > top && o.y + o.height < bottom;
-    if (coversWidth && coversTop) top = o.y + o.height;
-  }
-  return { x: box.x, y: top, width: box.width, height: bottom - top };
-}
-
-/** 選んだ教室を青い太枠で囲む（設備には枠線が無いものもあるので、元の線ではなく新しく描く） */
+/** 選んだ教室を青い太枠で囲む（角が欠けた区画もあるので、四角ではなく教室の背景の形をなぞる） */
 function drawSelection(layer: SVGGElement, room: SVGGElement) {
-  const box = visibleBox(room);
-  if (!box) return;
-  layer.append(
-    svgElement("rect", { x: box.x, y: box.y, width: box.width, height: box.height, fill: "none", stroke: "#2563eb", "stroke-width": 4 }),
-  );
+  const shape = room.firstElementChild?.cloneNode() as SVGElement | undefined;
+  if (!shape) return;
+  shape.removeAttribute("id");
+  shape.setAttribute("fill", "none");
+  shape.setAttribute("stroke", "#2563eb");
+  shape.setAttribute("stroke-width", "4");
+  layer.append(shape);
 }
 
-/**
- * SVG に描かれた室名を、パンフレットの名前（locationName）に置き換える
- * SVG の文字は図形なので書き換えられない。枠線以外の文字の図形を隠して、上に文字を描く
- */
-function drawRoomName(layer: SVGGElement, room: SVGGElement, name: string) {
-  const box = visibleBox(room);
-  if (!box) return;
-  for (const child of Array.from(room.children).slice(1)) {
-    if (!child.hasAttribute("stroke")) child.setAttribute("display", "none");
+/** 右上の件数バッジの中心。角が欠けた区画では、バッジが区画の中に入るまで下にずらす */
+function badgeCenter(room: SVGGElement, box: DOMRect, radius: number) {
+  const x = box.x + box.width - 15;
+  const shape = room.firstElementChild as SVGGeometryElement;
+  for (let y = box.y + 15; y < box.y + box.height; y += 4) {
+    if (shape.isPointInFill(new DOMPoint(x, y - radius))) return { x, y };
   }
-  layer.append(
-    svgElement(
-      "text",
-      {
-        x: box.x + box.width / 2,
-        y: box.y + box.height / 2,
-        fill: "#243E47",
-        "font-size": 14,
-        "font-weight": 700,
-        "text-anchor": "middle",
-        "dominant-baseline": "central",
-      },
-      name,
-    ),
-  );
+  return { x, y: box.y + 15 };
 }
 
 /** 教室の左上に「開催中」、右上に出展の件数のバッジを描く */
 function drawBadges(layer: SVGGElement, room: SVGGElement, info: RoomInfo, live: boolean) {
-  const box = visibleBox(room);
+  const box = roomBox(room);
   if (!box) return;
   const label = { fill: "#fff", "font-weight": 700, "text-anchor": "middle", "dominant-baseline": "central" };
   // 等倍表示（スマホで約0.5倍に縮小される）でも見えるよう、SVG の座標で大きめに描く
@@ -173,20 +128,7 @@ function drawBadges(layer: SVGGElement, room: SVGGElement, info: RoomInfo, live:
     );
   }
   if (info.exhibitions.length > 0) {
-    const cx = box.x + box.width - 15;
-    let cy = box.y + 15;
-    // 右上の角が別の区画の裏に入っている教室は、その区画の下までずらす
-    const covering = boxesDrawnOver(room);
-    for (let moved = true; moved; ) {
-      moved = false;
-      for (const o of covering) {
-        const hidden = cx + 11 > o.x && cx - 11 < o.x + o.width && cy + 11 > o.y && cy - 11 < o.y + o.height;
-        if (hidden && o.y + o.height + 15 > cy) {
-          cy = o.y + o.height + 15;
-          moved = true;
-        }
-      }
-    }
+    const { x: cx, y: cy } = badgeCenter(room, box, 11);
     layer.append(
       svgElement("circle", { cx, cy, r: 11, fill: "#2563eb" }),
       svgElement("text", { ...label, x: cx, y: cy, "font-size": 14 }, String(info.exhibitions.length)),
@@ -227,8 +169,6 @@ function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom, onSwipe }: Flo
         const live = now !== null && info.events.some((ev) => isOngoing(ev, now));
         g.dataset.roomState = live ? "live" : "content";
         if (g.id === selectedRoom) drawSelection(overlay, g);
-        const name = info.exhibitions[0]?.locationName;
-        if (name) drawRoomName(overlay, g, name);
         drawBadges(overlay, g, info, live);
       } else if (ROOM_ID.test(g.id)) {
         g.dataset.roomState = "empty";
