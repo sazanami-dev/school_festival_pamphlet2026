@@ -279,7 +279,7 @@ function ExhibitionsView() {
   const activeFloors = useMemo(() => new Set(groups.map((g) => g.floor)), [groups]);
 
   return (
-    <div className="mx-auto w-full max-w-md pb-24">
+    <div className="mx-auto w-full max-w-md pb-(--bottom-nav-space)">
       <div className="space-y-3 px-4 pt-4 pb-3">
         <h1 className="text-xl font-bold">出展一覧</h1>
         <input
