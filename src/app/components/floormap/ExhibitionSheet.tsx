@@ -89,7 +89,7 @@ export default function ExhibitionSheet({ floor, selectedRoom, onSelectRoom }: E
                   )}
                 >
                   <span className="shrink-0 rounded-md bg-blue-600 px-2 py-0.5 text-sm font-bold text-white">
-                    {rooms.join("・") || "―"}
+                    {ex.locationName ?? (rooms.join("・") || "―")}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block font-bold">{ex.exhibitionName}</span>

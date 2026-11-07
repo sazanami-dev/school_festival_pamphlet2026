@@ -10,6 +10,8 @@ export type Exhibition = {
   genre: string[];
   floor: string;
   location: string;
+  /** location が教室番号ではなく SVG の ID のときの表示名（例: "飲食店エリア"） */
+  locationName?: string;
   startTime: string | null;
   endTime: string | null;
   description: string;
