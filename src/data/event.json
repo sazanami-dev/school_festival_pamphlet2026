@@ -2,71 +2,61 @@
   {
     "id": "ev-01",
     "eventName": "CGスペシャリスト学科 TCコンペ表彰式",
-    "genre": ["コンテスト"],
-    "startTime": "10:30",
-    "endTime": "11:00",
+    "genre": ["表彰式"],
+    "startTime": "10:05",
+    "endTime": "10:30",
     "floor": "2",
     "location": "T22",
-    "description": "CGスペシャリスト学科 １年のデッサンコンペ表彰式！入学半年の成果をお見逃しなく！T22教室にて開催中！"
+    "description": "CGスペシャリスト学科 1年生のデッサンコンペ表彰式！入学半年の成果をお見逃しなく！"
   },
   {
     "id": "ev-02",
-    "eventName": "コスプレコンテスト アピールタイム",
-    "genre": ["コンテスト"],
-    "startTime": "11:00",
+    "eventName": "学園祭フリーステージ",
+    "genre": ["ステージ"],
+    "startTime": "10:45",
     "endTime": "11:45",
     "floor": "2",
     "location": "T22",
-    "description": "今年も工夫を凝らしたコスプレが勢ぞろい！観客席でアピールするランウェイは必見！T22教室にて開催中！"
+    "description": "年に一度の学園祭！今年はダンスや手品にDJも！？学園祭、最高テンションのスタートダッシュはフリーステージで決まり！"
   },
   {
     "id": "ev-03",
-    "eventName": "学園祭フリーステージ",
-    "genre": ["ステージ"],
-    "startTime": "12:15",
-    "endTime": "13:00",
+    "eventName": "コスプレコンテスト",
+    "genre": ["コンテスト"],
+    "startTime": "12:00",
+    "endTime": "13:30",
     "floor": "2",
     "location": "T22",
-    "description": "今年は「ダンス」「ヲタ芸」がエントリー！ダイナミックなプレーを楽しもう！T22教室にて開催中！"
+    "description": "今年も工夫を凝らしたコスプレが勢ぞろい！客席間近でアピールするランウェイは必見！"
   },
   {
     "id": "ev-04",
-    "eventName": "チャリティー餅つきイベント",
-    "genre": ["体験", "参加型"],
-    "startTime": "12:00",
-    "endTime": "13:00",
-    "floor": "1",
-    "location": "正面玄関",
-    "description": "学校主催の餅つき大会！１階正面玄関にて開催中！"
+    "eventName": "HAPPY☆MUSIC ライブイベント",
+    "genre": ["音楽", "ライブ"],
+    "startTime": "12:30",
+    "endTime": "14:30",
+    "floor": "8",
+    "location": "T82",
+    "description": "最近寒くなってきましたね…こんな時期こそ！僕らHAPPY☆MUSICのアツい演奏で盛り上がっちゃいましょう！！"
   },
   {
     "id": "ev-05",
-    "eventName": "HAPPY☆MUSICライブイベント",
-    "genre": ["音楽", "ライブ"],
-    "startTime": "13:00",
+    "eventName": "学校内フォトラリー 第1回フォトコンテスト授賞式",
+    "genre": ["表彰式", "コンテスト"],
+    "startTime": "14:00",
     "endTime": "14:30",
     "floor": "2",
-    "location": "T21",
-    "description": "軽音楽部「HAPPY☆MUSIC」によるライブ演奏！T21教室にて開催中！"
+    "location": "T22",
+    "description": "3つのテーマに沿って、学校や文化祭の魅力を写真に残そう！あなたのお気に入りの一枚がグランプリに選ばれるかも！"
   },
   {
     "id": "ev-06",
-    "eventName": "コスプレコンテスト 表彰式",
-    "genre": ["コンテスト"],
-    "startTime": "14:15",
-    "endTime": "14:45",
-    "floor": "2",
-    "location": "T22",
-    "description": "投票、審査員審査によって入選作品が決定！みんなの推しコスプレが入賞するかを見届けよう！T22教室にて開催中！"
-  },
-  {
-    "id": "ev-07",
     "eventName": "ビンゴ大会",
     "genre": ["ゲーム", "抽選"],
     "startTime": "15:00",
     "endTime": "16:00",
     "floor": "2",
     "location": "T22",
-    "description": "学園祭の目玉イベント「ビンゴ大会」！今年も豪華賞品が目白押し！己の強運で賞品をGETしよう！T22教室にて開催中！"
+    "description": "学園祭の目玉イベント「ビンゴ大会」！今年も豪華賞品が目白押し！己の強運で賞品をGETしよう！"
   }
 ]
