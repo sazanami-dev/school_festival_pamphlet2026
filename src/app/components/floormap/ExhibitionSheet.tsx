@@ -19,12 +19,12 @@ type ExhibitionSheetProps = {
   floor: Floor;
   /** マップで強調している教室のID */
   selectedRoom: string | null;
-  /** 出展をタップしたとき、その教室のID */
-  onSelectRoom: (room: string) => void;
+  /** 出展をタップしたとき */
+  onSelectExhibition: (exhibition: Exhibition) => void;
 };
 
 /** 表示中の階の出展一覧。マップの下からのぞかせ、引き上げると一覧が広がる */
-export default function ExhibitionSheet({ floor, selectedRoom, onSelectRoom }: ExhibitionSheetProps) {
+export default function ExhibitionSheet({ floor, selectedRoom, onSelectExhibition }: ExhibitionSheetProps) {
   const exhibitions = getExhibitionsOnFloor(floor);
   // どの階で開いた高さかも覚えておき、階を切り替えたら閉じた状態に戻す
   const [opened, setOpened] = useState<{ floor: Floor; snap: SnapPoint } | null>(null);
@@ -38,11 +38,8 @@ export default function ExhibitionSheet({ floor, selectedRoom, onSelectRoom }: E
   }, []);
 
   function select(exhibition: Exhibition) {
-    const [room] = locationsOf(exhibition);
-    if (!room) return;
-    // TODO: 出展詳細モーダルができたら、ここで開く
-    onSelectRoom(room);
-    // 選んだ教室がマップで見えるよう、シートを下げる
+    onSelectExhibition(exhibition);
+    // モーダルを閉じたあと、選んだ教室がマップで見えるようシートを下げる
     setOpened(null);
   }
 
