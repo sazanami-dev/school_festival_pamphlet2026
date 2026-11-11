@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { floorButtonClass } from "@/components/floorButton";
@@ -61,6 +61,19 @@ function FloorTabs() {
 
   // 階が変わったら、新しい階のマップをスライドさせて入れる。上の階は上から、下の階は下から入る
   // （ボタン・スワイプ・戻るボタンのどれで変わっても同じ。最初に開いたときは動かさない）
+  // 階ボタンの列がスクロールしているときは、選んでいる階のボタンが見えるようにする
+  // （階を変えたときと、イベントのお知らせが出たり消えたりして列の高さが変わったとき）
+  const floorListRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const list = floorListRef.current;
+    if (!list) return;
+    const reveal = () => list.querySelector("[data-active]")?.scrollIntoView({ block: "nearest" });
+    reveal();
+    const observer = new ResizeObserver(reveal);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [floor]);
+
   const [shown, setShown] = useState<{ floor: Floor; enterFrom: "top" | "bottom" | null }>({
     floor,
     enterFrom: null,
@@ -154,7 +167,13 @@ function FloorTabs() {
       <FloorHeading floor={floor} />
       <div className="flex min-h-0 flex-1 gap-2 px-4 pb-3">
         {/* 階切替ボタンはマップの左に縦に並べる。エレベーターのように上の階ほど上 */}
-        <TabsList className="w-10 shrink-0 gap-1.5 self-center bg-transparent p-0">
+        {/* 画面が低い（Android やイベントのお知らせが出ているとき）と8個のボタンが入りきらないので、
+            列の高さはマップの枠まで（max-h-full）にし、まずボタンを低くして収める。それでも入らなければ列をスクロールする
+            （中央寄せのままだと上のボタンにスクロールで届かなくなるので上詰め。収まるときは列ごと中央に置かれる） */}
+        <TabsList
+          ref={floorListRef}
+          className="max-h-full w-10 shrink-0 justify-start gap-1.5 self-center overflow-y-auto bg-transparent p-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {floorsTopDown.map((f) => (
             <TabsTrigger
               key={f}
@@ -164,6 +183,8 @@ function FloorTabs() {
                 floorButtonClass,
                 // tabs.tsx の縦向き用の指定（group-data-vertical/tabs:justify-start）は同じ条件付きクラスでないと上書きできない
                 "shadow-none group-data-vertical/tabs:justify-center",
+                // 普段は 40px の正方形。入りきらないときだけ縦に縮む（押しやすさを保てる 32px まで）
+                "h-auto min-h-8 flex-[0_1_2.5rem]",
               )}
             >
               {f}

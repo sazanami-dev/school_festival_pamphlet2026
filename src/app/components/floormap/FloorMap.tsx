@@ -56,11 +56,16 @@ function getFloorSvg(floor: Floor) {
   return promise;
 }
 
-/** 右下の＋／−／リセットボタン（片手操作・PC用） */
+/**
+ * 右下の＋／−／リセットボタン（片手操作・PC用）
+ * 縦に3つ並べると約 124px 要る。画面が低い（Android やイベントのお知らせが出ているとき）と
+ * マップの枠がそれより低くなり上にはみ出すので、枠の高さが 8rem 未満なら横に並べる
+ * （枠の高さはコンテナクエリで見る。枠に [container:floormap/size] を付けている）
+ */
 function ZoomControls() {
   const { zoomIn, zoomOut, resetTransform } = useControls();
   return (
-    <div className="absolute right-2 bottom-2 flex flex-col gap-1">
+    <div className="absolute right-2 bottom-2 flex flex-col gap-1 [@container_floormap_(height<8rem)]:flex-row">
       <Button variant="outline" size="icon-lg" aria-label="拡大" onClick={() => zoomIn(ZOOM_STEP)}>
         <Plus />
       </Button>
@@ -219,7 +224,7 @@ function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom, onSwipe }: Flo
     // ピンチ・ダブルタップ・ドラッグで拡大縮小と移動ができる
     // 階ごとに別のインスタンスになるので、階を切り替えると拡大率と位置はリセットされる
     <TransformWrapper ref={transformRef} minScale={MIN_SCALE} maxScale={MAX_SCALE} doubleClick={{ step: ZOOM_STEP }}>
-      <div className="relative size-full">
+      <div className="relative size-full [container:floormap/size]">
         <TransformComponent wrapperStyle={FILL} contentStyle={FILL}>
           {/* 枠いっぱいに広げ、縦横比を保ったまま全体が収まる大きさで中央に表示する */}
           <div
