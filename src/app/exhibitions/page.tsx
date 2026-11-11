@@ -4,10 +4,9 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import ExhibitionCard from "@/components/ExhibitionCard";
 import ExhibitionDetailModal, {
   formatPlace,
-  formatTimeRange,
-  GenreBadges,
   getGenreColor,
   sortGenres,
   type Exhibition,
@@ -109,7 +108,7 @@ const allGenres = sortGenres([...new Set(exhibitions.flatMap((e) => e.genre))]);
  * ======================================================= */
 
 const chipClass =
-  "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground";
+  "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors aria-pressed:border-blue-500 aria-pressed:bg-blue-500 aria-pressed:text-white";
 
 /** ジャンル絞り込みチップ（横スクロール・複数選択可） */
 function GenreChips({
@@ -166,37 +165,13 @@ function FloorJumpBar({ activeFloors }: { activeFloors: Set<string> }) {
           type="button"
           disabled={!activeFloors.has(floor)}
           onClick={() => jump(floor)}
-          className="flex h-9 min-w-11 shrink-0 items-center justify-center rounded-lg border px-2 text-sm font-medium hover:bg-muted disabled:opacity-30"
+          aria-label={`${floor}階へ移動`}
+          className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background text-base hover:bg-muted disabled:opacity-30"
         >
-          {floor}F
+          {floor}
         </button>
       ))}
     </nav>
-  );
-}
-
-/** 一覧の1項目。項目全体がタップ範囲 */
-function ExhibitionListItem({
-  exhibition,
-  onSelect,
-}: {
-  exhibition: Exhibition;
-  onSelect: (exhibition: Exhibition) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(exhibition)}
-      className="flex w-full flex-col items-start gap-1 px-4 py-3 text-left transition-colors hover:bg-muted active:bg-muted"
-    >
-      <span className="font-bold">{exhibition.exhibitionName}</span>
-      <span className="text-sm text-muted-foreground">
-        {formatPlace(exhibition)}
-        <span className="mx-1.5">・</span>
-        {formatTimeRange(exhibition.startTime, exhibition.endTime)}
-      </span>
-      <GenreBadges genres={exhibition.genre} className="mt-0.5" />
-    </button>
   );
 }
 
@@ -280,8 +255,8 @@ function ExhibitionsView() {
 
   return (
     <div className="mx-auto w-full max-w-md pb-(--bottom-nav-space)">
-      <div className="space-y-3 px-4 pt-4 pb-3">
-        <h1 className="text-xl font-bold">出展一覧</h1>
+      <div className="space-y-3 px-4 pt-3 pb-3">
+        <h1 className="text-center text-2xl font-bold">出展一覧</h1>
         <input
           type="search"
           value={inputValue}
@@ -311,11 +286,11 @@ function ExhibitionsView() {
         groups.map((group) => (
           <section key={group.floor} id={`floor-${group.floor}`} className="scroll-mt-14">
             {/* スクロール中もこの階の間は上部に残る（top-14 は階ジャンプバーの高さ） */}
-            <h2 className="sticky top-14 z-10 border-b bg-muted px-4 py-1.5 text-sm font-bold">{group.floor}F</h2>
-            <ul className="divide-y">
+            <h2 className="sticky top-14 z-10 border-b bg-muted px-4 py-1.5 text-sm font-bold">{group.floor}階</h2>
+            <ul className="px-4">
               {group.items.map((item) => (
-                <li key={item.id}>
-                  <ExhibitionListItem exhibition={item} onSelect={setSelected} />
+                <li key={item.id} className="border-b last:border-b-0">
+                  <ExhibitionCard exhibition={item} onSelect={setSelected} />
                 </li>
               ))}
             </ul>
@@ -331,8 +306,8 @@ function ExhibitionsView() {
 /** 読み込み中に表示する枠 */
 function ExhibitionsFallback() {
   return (
-    <div className="mx-auto w-full max-w-md px-4 pt-4">
-      <h1 className="text-xl font-bold">出展一覧</h1>
+    <div className="mx-auto w-full max-w-md px-4 pt-3">
+      <h1 className="text-center text-2xl font-bold">出展一覧</h1>
       <p className="py-16 text-center text-sm text-muted-foreground">読み込み中…</p>
     </div>
   );

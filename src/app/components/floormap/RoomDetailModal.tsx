@@ -36,7 +36,7 @@ export default function RoomDetailModal({ room, onClose, onSelectExhibition }: R
           {shown && (
             <>
               <div className="flex items-start gap-3 border-b px-4 py-3">
-                <Dialog.Title className="flex-1 pt-1 text-lg font-bold">{shown.name}</Dialog.Title>
+                <Dialog.Title className="min-w-0 flex-1 pt-1 text-lg font-bold wrap-anywhere">{shown.name}</Dialog.Title>
                 <Dialog.Close
                   aria-label="閉じる"
                   className="-mr-2 flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-muted"
@@ -57,7 +57,7 @@ export default function RoomDetailModal({ room, onClose, onSelectExhibition }: R
                             onClick={() => onSelectExhibition(ex)}
                             className="block w-full px-3 py-2.5 text-left hover:bg-muted"
                           >
-                            <span className="block text-sm font-bold">{ex.exhibitionName}</span>
+                            <span className="block text-sm font-bold wrap-anywhere">{ex.exhibitionName}</span>
                             <GenreBadges genres={ex.genre} className="mt-1" />
                           </button>
                         </li>

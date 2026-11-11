@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { BOTTOM_NAV_SPACE } from "@/components/BottomNav";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import ExhibitionCard from "@/components/ExhibitionCard";
 import type { Floor } from "./floors";
 import { getExhibitionsOnFloor, locationsOf, type Exhibition } from "./roomData";
 
@@ -73,34 +74,10 @@ export default function ExhibitionSheet({ floor, selectedRoom, onSelectExhibitio
         {/* シートが途中の高さで止まっていても、一覧の最後まで見えるよう下に隠れている分とナビゲーションバーの分の余白を足す */}
         <ul className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(var(--sheet-hidden)+var(--bottom-nav-space)+1rem)]">
           {exhibitions.map((ex) => {
-            const rooms = locationsOf(ex);
-            const selected = selectedRoom !== null && rooms.includes(selectedRoom);
+            const selected = selectedRoom !== null && locationsOf(ex).includes(selectedRoom);
             return (
               <li key={ex.id} className="border-b last:border-b-0">
-                {/* TODO: 共通の出展カードができたら置き換える */}
-                <button
-                  type="button"
-                  onClick={() => select(ex)}
-                  aria-current={selected || undefined}
-                  className={cn(
-                    "flex w-full items-start gap-3 rounded-lg px-2 py-3 text-left",
-                    selected && "bg-blue-50 dark:bg-blue-950",
-                  )}
-                >
-                  <span className="shrink-0 rounded-md bg-blue-600 px-2 py-0.5 text-sm font-bold text-white">
-                    {ex.locationName ?? (rooms.join("・") || "―")}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-bold">{ex.exhibitionName}</span>
-                    <span className="mt-1 flex flex-wrap gap-1">
-                      {ex.genre.map((g) => (
-                        <span key={g} className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                          {g}
-                        </span>
-                      ))}
-                    </span>
-                  </span>
-                </button>
+                <ExhibitionCard exhibition={ex} onSelect={select} selected={selected} />
               </li>
             );
           })}
