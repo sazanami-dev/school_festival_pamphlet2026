@@ -10,7 +10,15 @@ import ExhibitionSheet, { SHEET_PEEK } from "./ExhibitionSheet";
 import FloorMap, { FloorMapSkeleton } from "./FloorMap";
 import { floors, type Floor } from "./floors";
 import RoomDetailModal from "./RoomDetailModal";
-import { getRoomsOnFloor, locationsOf, type Exhibition, type RoomInfo } from "./roomData";
+import FacilityDetailModal from "./FacilityDetailModal";
+import {
+  getFacilitiesOnFloor,
+  getRoomsOnFloor,
+  locationsOf,
+  type Exhibition,
+  type Facility,
+  type RoomInfo,
+} from "./roomData";
 
 const DEFAULT_FLOOR: Floor = 1;
 // 階切替ボタンの並び（上から 8 → 1）
@@ -48,6 +56,8 @@ function FloorTabs() {
   // 一覧から出展を選んだときは listedRoom を残し、詳細を閉じると一覧に戻る
   const [listedRoom, setListedRoom] = useState<{ name: string; info: RoomInfo } | null>(null);
   const [detail, setDetail] = useState<Exhibition | null>(null);
+  // 案内を開いている設備（マックスマートなど）
+  const [facility, setFacility] = useState<Facility | null>(null);
 
   // 階が変わったら、新しい階のマップをスライドさせて入れる。上の階は上から、下の階は下から入る
   // （ボタン・スワイプ・戻るボタンのどれで変わっても同じ。最初に開いたときは動かさない）
@@ -60,6 +70,7 @@ function FloorTabs() {
     setSelected(null);
     setListedRoom(null);
     setDetail(null);
+    setFacility(null);
   }
 
   // ?room= が新しく指定されたら（最初に開いたときも含む）、その教室を選ぶ
@@ -88,9 +99,14 @@ function FloorTabs() {
     }
   }
 
-  /** マップの教室をタップしたとき。出展が1件だけならその詳細を、それ以外は教室の一覧を開く */
+  /** マップの教室をタップしたとき。出展が1件だけならその詳細を、それ以外は教室の一覧を開く（設備ならその案内） */
   function tapRoom(room: string | null) {
     selectRoom(room);
+    const tappedFacility = room ? getFacilitiesOnFloor(floor).get(room) : undefined;
+    if (tappedFacility) {
+      setFacility(tappedFacility);
+      return;
+    }
     const info = room ? getRoomsOnFloor(floor).get(room) : undefined;
     if (!room || !info) return;
     if (info.exhibitions.length === 1 && info.events.length === 0) {
@@ -186,6 +202,7 @@ function FloorTabs() {
         onSelectExhibition={setDetail}
       />
       <ExhibitionDetailModal exhibition={detail} onClose={() => setDetail(null)} showMapLink={false} />
+      <FacilityDetailModal facility={facility} onClose={() => setFacility(null)} />
     </Tabs>
   );
 }

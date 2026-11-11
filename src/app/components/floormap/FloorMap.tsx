@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, use, useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react";
+import { Suspense, use, useEffect, useLayoutEffect, useRef } from "react";
 import { Minus, Plus, RotateCcw } from "lucide-react";
 import {
   TransformComponent,
@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { loadFloor, type Floor } from "./floors";
 import { cn } from "@/lib/utils";
-import { getRoomsOnFloor, isOngoing, nowInMinutes, type RoomInfo } from "./roomData";
+import { getFacilitiesOnFloor, getRoomsOnFloor, isOngoing, useNowInMinutes, type RoomInfo } from "./roomData";
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
@@ -34,12 +34,14 @@ const SVG_NS = "http://www.w3.org/2000/svg";
  *   content : 出展・イベントがある教室（タップできる）
  *   live    : イベント開催中の教室（色は content と同じ。「開催中」バッジは別に描く）
  *   empty   : 出展が無い教室（グレー・タップしても反応しない）
+ *   facility: 案内のある設備（マックスマートなど。色は変えずにタップできるだけ）
  * ※ next.config.ts の設定で CSS Modules が使えないため、Tailwind の任意セレクタで書いている
  */
 const ROOM_STYLES = cn(
   "[&_g[data-room-state=content]>:first-child]:fill-amber-200 [&_g[data-room-state=content]]:cursor-pointer",
   "[&_g[data-room-state=live]>:first-child]:fill-amber-200 [&_g[data-room-state=live]]:cursor-pointer",
   "[&_g[data-room-state=empty]>:first-child]:fill-gray-200",
+  "[&_g[data-room-state=facility]]:cursor-pointer",
 );
 
 // 同じ階を何度表示しても読み込みは1回だけにする
@@ -70,16 +72,6 @@ function ZoomControls() {
       </Button>
     </div>
   );
-}
-
-/** 30秒ごとに今の時刻（0時からの分）を返す。サーバーでの描画中は null */
-function subscribeClock(onChange: () => void) {
-  const id = setInterval(onChange, 30_000);
-  return () => clearInterval(id);
-}
-
-function useNowInMinutes() {
-  return useSyncExternalStore(subscribeClock, nowInMinutes, () => null);
 }
 
 function svgElement(tag: string, attrs: Record<string, string | number>, text?: string) {
@@ -142,7 +134,7 @@ type FloorMapProps = {
   selectedRoom: string | null;
   /** 中央に拡大して表示する教室。新しいオブジェクトを渡すたびに、その教室へ移動する */
   focusRoom: { room: string } | null;
-  /** 出展・イベントのある教室がタップされたとき。教室以外をタップしたときは null */
+  /** 出展・イベントのある教室か、案内のある設備がタップされたとき。それ以外をタップしたときは null */
   onSelectRoom: (room: string | null) => void;
   /** 等倍のマップを上下にスワイプしたとき。up は指を上に動かしたとき */
   onSwipe: (direction: "up" | "down") => void;
@@ -151,6 +143,7 @@ type FloorMapProps = {
 function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom, onSwipe }: FloorMapProps) {
   const svg = use(getFloorSvg(floor));
   const rooms = getRoomsOnFloor(floor);
+  const facilities = getFacilitiesOnFloor(floor);
   const now = useNowInMinutes();
   const containerRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<ReactZoomPanPinchRef>(null);
@@ -170,13 +163,16 @@ function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom, onSwipe }: Flo
         g.dataset.roomState = live ? "live" : "content";
         if (g.id === selectedRoom) drawSelection(overlay, g);
         drawBadges(overlay, g, info, live);
+      } else if (facilities.has(g.id)) {
+        g.dataset.roomState = "facility";
+        if (g.id === selectedRoom) drawSelection(overlay, g);
       } else if (ROOM_ID.test(g.id)) {
         g.dataset.roomState = "empty";
       }
     }
     // 枠とバッジは教室より手前に表示したいので最後に追加する
     root.append(overlay);
-  }, [rooms, now, selectedRoom]);
+  }, [rooms, facilities, now, selectedRoom]);
 
   // 指定された教室が枠の中央に来るよう拡大・移動する（教室が枠に収まる倍率。ただし FOCUS_MAX_SCALE まで）
   useEffect(() => {
@@ -211,7 +207,7 @@ function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom, onSwipe }: Flo
       return;
     }
     const room = (e.target as Element).closest<SVGGElement>(
-      'g[data-room-state="content"], g[data-room-state="live"]',
+      'g[data-room-state="content"], g[data-room-state="live"], g[data-room-state="facility"]',
     );
     // 教室を選ぶとモーダルが開く。Android の Chrome は指を離したあとに同じ場所へ click を送るので、
     // そのままだと開いたばかりのモーダルの中（一覧の1件目など）を押したことになってしまう
