@@ -167,7 +167,7 @@ function reachedFloor(floor: string) {
  */
 function FloorJumpBar({ activeFloors }: { activeFloors: Set<string> }) {
   const [current, setCurrent] = useState<string | null>(null);
-  // ボタンで移動した階。一番下の短い階はバーの位置まで上がってこないので、ページの最後まで来たらこちらを使う
+  // ボタンで移動した階（着くまでの間、この階を青くしておく）
   const jumpedTo = useRef<string | null>(null);
   const barRef = useRef<HTMLElement>(null);
   // ボタンで移動している間は、通り過ぎる階を青くしないよう、スクロールが止まるまで押した階のままにする
@@ -185,8 +185,6 @@ function FloorJumpBar({ activeFloors }: { activeFloors: Set<string> }) {
         const top = document.getElementById(`floor-${f}`)?.getBoundingClientRect().top;
         if (top !== undefined && top <= JUMP_BAR_HEIGHT + 1) found = f;
       }
-      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
-      if (atBottom && jumpedTo.current && floors.includes(jumpedTo.current)) found = jumpedTo.current;
       setCurrent(found);
     }
     function endJump() {
@@ -374,8 +372,18 @@ function ExhibitionsView() {
           </Button>
         </div>
       ) : (
-        groups.map((group) => (
-          <section key={group.floor} id={`floor-${group.floor}`} className="scroll-mt-14">
+        groups.map((group, i) => (
+          <section
+            key={group.floor}
+            id={`floor-${group.floor}`}
+            className={cn(
+              "scroll-mt-14",
+              // 最後の階は出展が少なくても見出しが一番上まで上がるよう、画面の高さから
+              // 階ジャンプバー（3.5rem）と下のナビゲーションバーの分を引いた高さを確保する
+              // （lvh はアドレスバーが隠れたときの高さ。どちらの状態でも上まで届く）
+              i === groups.length - 1 && "min-h-[calc(100lvh-3.5rem-var(--bottom-nav-space))]",
+            )}
+          >
             {/* スクロール中もこの階の間は上部に残る（top-14 は階ジャンプバーの高さ） */}
             <h2 className="sticky top-14 z-10 border-b bg-muted px-4 py-1.5 text-sm font-bold">{group.floor}階</h2>
             <ul className="px-4">
