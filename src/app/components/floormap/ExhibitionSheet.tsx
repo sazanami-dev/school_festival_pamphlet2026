@@ -72,7 +72,13 @@ export default function ExhibitionSheet({ floor, selectedRoom, onSelectExhibitio
           <span className="text-sm text-muted-foreground">{exhibitions.length}件</span>
         </DrawerHeader>
         {/* シートが途中の高さで止まっていても、一覧の最後まで見えるよう下に隠れている分とナビゲーションバーの分の余白を足す */}
-        <ul className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(var(--sheet-hidden)+var(--bottom-nav-space)+1rem)]">
+        {/* 閉じている（見出しだけの）間は一覧をスクロールさせない。指で動かすとシートが引き上がる */}
+        <ul
+          className={cn(
+            "min-h-0 flex-1 px-4 pb-[calc(var(--sheet-hidden)+var(--bottom-nav-space)+1rem)]",
+            snap === SHEET_PEEK ? "overflow-hidden" : "overflow-y-auto",
+          )}
+        >
           {exhibitions.map((ex) => {
             const selected = selectedRoom !== null && locationsOf(ex).includes(selectedRoom);
             return (
