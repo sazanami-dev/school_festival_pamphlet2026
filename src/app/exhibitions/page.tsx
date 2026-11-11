@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ExhibitionCard from "@/components/ExhibitionCard";
+import { floorButtonClass } from "@/components/floorButton";
 import ExhibitionDetailModal, {
   formatPlace,
   getGenreColor,
@@ -145,17 +146,105 @@ function GenreChips({
   );
 }
 
+/** 階ジャンプバーの高さ（h-14 = 56px） */
+const JUMP_BAR_HEIGHT = 56;
+/** スクロールイベントがこの時間来なければ、スクロールが止まったとみなす */
+const SCROLL_END_MS = 150;
+/** ボタンで移動するとき、押した階に着くまで待つ最長の時間（途中で指で止められたときなど） */
+const JUMP_TIMEOUT_MS = 3000;
+
+/** その階の見出しがバーのすぐ下まで来たか（一番下までスクロールしきったときも着いたとみなす） */
+function reachedFloor(floor: string) {
+  const top = document.getElementById(`floor-${floor}`)?.getBoundingClientRect().top;
+  const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+  return atBottom || (top !== undefined && Math.abs(top - JUMP_BAR_HEIGHT) <= 2);
+}
+
 /**
  * 階ジャンプボタン。スクロールしても上部に残る（sticky）。
  * 高さ h-14 は、階見出しの top-14 と各階セクションの scroll-mt-14 と合わせている。
+ * 今見ている階のボタンは、マップの階ボタンと同じく青くする。
  */
 function FloorJumpBar({ activeFloors }: { activeFloors: Set<string> }) {
-  function jump(floor: string) {
+  const [current, setCurrent] = useState<string | null>(null);
+  // ボタンで移動した階。一番下の短い階はバーの位置まで上がってこないので、ページの最後まで来たらこちらを使う
+  const jumpedTo = useRef<string | null>(null);
+  const barRef = useRef<HTMLElement>(null);
+  // ボタンで移動している間は、通り過ぎる階を青くしないよう、スクロールが止まるまで押した階のままにする
+  const jumping = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const jumpDeadline = useRef(0);
+  const endJumpRef = useRef<() => void>(() => {});
+
+  // スクロールに合わせて「今見ている階」を求める
+  useEffect(() => {
+    const floors = allFloors.filter((f) => activeFloors.has(f));
+    function update() {
+      // バーの下まで上がってきた階のうち、一番下のもの。まだどこも上がっていなければ最初の階
+      let found = floors[0] ?? null;
+      for (const f of floors) {
+        const top = document.getElementById(`floor-${f}`)?.getBoundingClientRect().top;
+        if (top !== undefined && top <= JUMP_BAR_HEIGHT + 1) found = f;
+      }
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      if (atBottom && jumpedTo.current && floors.includes(jumpedTo.current)) found = jumpedTo.current;
+      setCurrent(found);
+    }
+    function endJump() {
+      // スクロールが始まる前や途中で止まっただけなら、押した階に着くまで待ち続ける
+      if (jumpedTo.current && !reachedFloor(jumpedTo.current) && performance.now() < jumpDeadline.current) {
+        jumping.current = setTimeout(endJump, SCROLL_END_MS);
+        return;
+      }
+      jumping.current = null;
+      update();
+    }
+    endJumpRef.current = endJump;
+    let frame = 0;
+    function onScroll() {
+      if (jumping.current) {
+        // スクロールが続いている間は待ち、止まってから今の階を求め直す
+        clearTimeout(jumping.current);
+        jumping.current = setTimeout(endJump, SCROLL_END_MS);
+        return;
+      }
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    }
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [activeFloors]);
+
+  // 青いボタンが横にはみ出していたら、見える位置までバーを横スクロールする
+  useEffect(() => {
+    const bar = barRef.current;
+    const button = bar?.querySelector<HTMLElement>("[data-active]");
+    if (!bar || !button) return;
+    const left = button.offsetLeft - bar.offsetLeft;
+    const right = left + button.offsetWidth;
+    if (left < bar.scrollLeft || right > bar.scrollLeft + bar.clientWidth) {
+      bar.scrollTo({ left: left - (bar.clientWidth - button.offsetWidth) / 2, behavior: "smooth" });
+    }
+  }, [current]);
+
+  /** clickedAt はタップした時刻（event.timeStamp。performance.now() と同じ基準） */
+  function jump(floor: string, clickedAt: number) {
+    jumpedTo.current = floor;
+    setCurrent(floor);
+    if (jumping.current) clearTimeout(jumping.current);
+    jumpDeadline.current = clickedAt + JUMP_TIMEOUT_MS;
+    jumping.current = setTimeout(endJumpRef.current, SCROLL_END_MS);
     document.getElementById(`floor-${floor}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
     <nav
+      ref={barRef}
       aria-label="階へ移動"
       className="sticky top-0 z-20 flex h-14 items-center gap-2 overflow-x-auto border-b bg-background px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
@@ -164,9 +253,11 @@ function FloorJumpBar({ activeFloors }: { activeFloors: Set<string> }) {
           key={floor}
           type="button"
           disabled={!activeFloors.has(floor)}
-          onClick={() => jump(floor)}
+          onClick={(e) => jump(floor, e.timeStamp)}
           aria-label={`${floor}階へ移動`}
-          className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background text-base hover:bg-muted disabled:opacity-30"
+          aria-current={floor === current ? "location" : undefined}
+          data-active={floor === current || undefined}
+          className={cn(floorButtonClass, "not-data-active:hover:bg-muted disabled:opacity-30")}
         >
           {floor}
         </button>

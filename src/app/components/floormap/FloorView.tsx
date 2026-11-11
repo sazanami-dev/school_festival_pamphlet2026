@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { floorButtonClass } from "@/components/floorButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ExhibitionDetailModal from "@/components/ExhibitionDetailModal";
 import ExhibitionSheet, { SHEET_PEEK } from "./ExhibitionSheet";
@@ -144,10 +145,9 @@ function FloorTabs() {
               value={f}
               aria-label={`${f}階`}
               className={cn(
+                floorButtonClass,
                 // tabs.tsx の縦向き用の指定（group-data-vertical/tabs:justify-start）は同じ条件付きクラスでないと上書きできない
-                "size-10 flex-none rounded-lg border-border bg-background text-base text-foreground shadow-none group-data-vertical/tabs:justify-center",
-                "data-active:border-blue-500 data-active:bg-blue-500 data-active:text-white",
-                "dark:data-active:border-blue-500 dark:data-active:bg-blue-500 dark:data-active:text-white",
+                "shadow-none group-data-vertical/tabs:justify-center",
               )}
             >
               {f}
