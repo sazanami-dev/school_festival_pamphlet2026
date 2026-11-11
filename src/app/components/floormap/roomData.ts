@@ -2,18 +2,10 @@
 // 紐付けは「階」と「SVGのID = JSON の location」が一致するかで判定する
 import exhibitionData from "@/data/ExhibitionInfo.json";
 import eventData from "@/data/event.json";
+import type { Exhibition } from "@/components/ExhibitionDetailModal";
 import type { Floor } from "./floors";
 
-export type Exhibition = {
-  id: string;
-  exhibitionName: string;
-  genre: string[];
-  floor: string;
-  location: string;
-  startTime: string | null;
-  endTime: string | null;
-  description: string;
-};
+export type { Exhibition };
 
 export type FestivalEvent = {
   id: string;

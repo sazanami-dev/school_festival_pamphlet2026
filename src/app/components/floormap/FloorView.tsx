@@ -4,9 +4,12 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ExhibitionDetailModal from "@/components/ExhibitionDetailModal";
 import ExhibitionSheet, { SHEET_PEEK } from "./ExhibitionSheet";
 import FloorMap, { FloorMapSkeleton } from "./FloorMap";
 import { floors, type Floor } from "./floors";
+import RoomDetailModal from "./RoomDetailModal";
+import { getRoomsOnFloor, locationsOf, type Exhibition, type RoomInfo } from "./roomData";
 
 const DEFAULT_FLOOR: Floor = 1;
 // 階切替ボタンの並び（上から 8 → 1）
@@ -40,6 +43,11 @@ function FloorTabs() {
   type Selection = { room: string; center: boolean };
   const [selected, setSelected] = useState<Selection | null>(null);
 
+  // 開いているモーダル。出展が複数ある教室やイベントの教室は、先に一覧（listedRoom）を出す
+  // 一覧から出展を選んだときは listedRoom を残し、詳細を閉じると一覧に戻る
+  const [listedRoom, setListedRoom] = useState<{ name: string; info: RoomInfo } | null>(null);
+  const [detail, setDetail] = useState<Exhibition | null>(null);
+
   // 階が変わったら、新しい階のマップをスライドさせて入れる。上の階は上から、下の階は下から入る
   // （ボタン・スワイプ・戻るボタンのどれで変わっても同じ。最初に開いたときは動かさない）
   const [shown, setShown] = useState<{ floor: Floor; enterFrom: "top" | "bottom" | null }>({
@@ -49,6 +57,8 @@ function FloorTabs() {
   if (shown.floor !== floor) {
     setShown({ floor, enterFrom: floor > shown.floor ? "top" : "bottom" });
     setSelected(null);
+    setListedRoom(null);
+    setDetail(null);
   }
 
   // ?room= が新しく指定されたら（最初に開いたときも含む）、その教室を選ぶ
@@ -62,7 +72,6 @@ function FloorTabs() {
 
   const selectedRoom = selected?.room ?? null;
 
-  // TODO: 詳細モーダルができたら、選んだときにモーダルを開く
   function selectRoom(room: string | null, { center = false } = {}) {
     // 毎回新しいオブジェクトにするので、同じ教室をもう一度選んでも中央に戻る
     setSelected(room ? { room, center } : null);
@@ -76,6 +85,26 @@ function FloorTabs() {
       // 履歴は増やさず、今の履歴を書き換える
       window.history.replaceState(null, "", `?${params}`);
     }
+  }
+
+  /** マップの教室をタップしたとき。出展が1件だけならその詳細を、それ以外は教室の一覧を開く */
+  function tapRoom(room: string | null) {
+    selectRoom(room);
+    const info = room ? getRoomsOnFloor(floor).get(room) : undefined;
+    if (!room || !info) return;
+    if (info.exhibitions.length === 1 && info.events.length === 0) {
+      setDetail(info.exhibitions[0]);
+    } else {
+      setListedRoom({ name: info.exhibitions[0]?.locationName ?? room, info });
+    }
+  }
+
+  /** 出展一覧の項目をタップしたとき。教室を中央に表示して、詳細を開く */
+  function tapExhibition(exhibition: Exhibition) {
+    const [room] = locationsOf(exhibition);
+    if (room) selectRoom(room, { center: true });
+    setListedRoom(null);
+    setDetail(exhibition);
   }
 
   // 指を下に動かすと上の階へ、上に動かすと下の階へ。一番上・一番下の階では何もしない
@@ -143,14 +172,20 @@ function FloorTabs() {
                 floor={f}
                 selectedRoom={selectedRoom}
                 focusRoom={selected?.center ? selected : null}
-                onSelectRoom={(room) => selectRoom(room)}
+                onSelectRoom={tapRoom}
                 onSwipe={swipeFloor}
               />
             </TabsContent>
           ))}
         </div>
       </div>
-      <ExhibitionSheet floor={floor} selectedRoom={selectedRoom} onSelectRoom={(room) => selectRoom(room, { center: true })} />
+      <ExhibitionSheet floor={floor} selectedRoom={selectedRoom} onSelectExhibition={tapExhibition} />
+      <RoomDetailModal
+        room={detail ? null : listedRoom}
+        onClose={() => setListedRoom(null)}
+        onSelectExhibition={setDetail}
+      />
+      <ExhibitionDetailModal exhibition={detail} onClose={() => setDetail(null)} showMapLink={false} />
     </Tabs>
   );
 }

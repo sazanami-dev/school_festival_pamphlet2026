@@ -19,6 +19,8 @@ export type Exhibition = {
   genre: string[];
   floor: string;
   location: string;
+  /** location が教室番号ではなく SVG の ID のときの表示名（例: "飲食店エリア"） */
+  locationName?: string;
   /** 設定がない場合は null */
   startTime: string | null;
   /** 設定がない場合は null */
@@ -94,8 +96,9 @@ export function formatTimeRange(start: string | null, end: string | null): strin
 }
 
 /** 「2F T28」の形にする。場所が空なら「2F」だけ */
-export function formatPlace(item: { floor: string; location: string }): string {
-  return item.location ? `${item.floor}F ${item.location}` : `${item.floor}F`;
+export function formatPlace(item: { floor: string; location: string; locationName?: string }): string {
+  const place = item.locationName ?? item.location.replaceAll(",", "・");
+  return place ? `${item.floor}F ${place}` : `${item.floor}F`;
 }
 
 /** ジャンルの数だけ色付きバッジを並べる */
@@ -131,10 +134,12 @@ type Props = {
   /** 表示する出展。null のときは閉じる */
   exhibition: Exhibition | null;
   onClose: () => void;
+  /** 「マップで場所を見る」を出すか。マップから開くときは隠す */
+  showMapLink?: boolean;
 };
 
 /** 出展の詳細モーダル（画面中央に表示する） */
-export default function ExhibitionDetailModal({ exhibition, onClose }: Props) {
+export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink = true }: Props) {
   // 閉じるアニメーションの間も中身を表示し続けるため、最後に開いた出展を覚えておく
   const [shown, setShown] = useState(exhibition);
   if (exhibition && exhibition !== shown) {
@@ -157,9 +162,9 @@ export default function ExhibitionDetailModal({ exhibition, onClose }: Props) {
       }}
     >
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-40 bg-black/40 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0" />
+        <Dialog.Backdrop className="fixed inset-0 z-70 bg-black/40 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0" />
         {/* 画面中央に配置。少し縮んだ状態からふわっと出てくる */}
-        <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 flex max-h-[85dvh] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl bg-background text-foreground shadow-xl outline-none transition-[scale,opacity] duration-150 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+        <Dialog.Popup className="fixed top-1/2 left-1/2 z-70 flex max-h-[85dvh] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl bg-background text-foreground shadow-xl outline-none transition-[scale,opacity] duration-150 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
           {shown && (
             <>
               <div className="flex items-start gap-3 border-b px-4 py-3">
@@ -205,15 +210,17 @@ export default function ExhibitionDetailModal({ exhibition, onClose }: Props) {
                 )}
               </div>
 
-              <div className="border-t px-4 py-3">
-                <Link
-                  href={mapHref(shown)}
-                  onClick={onClose}
-                  className={buttonVariants({ size: "lg", className: "h-11 w-full text-base" })}
-                >
-                  マップで場所を見る
-                </Link>
-              </div>
+              {showMapLink && (
+                <div className="border-t px-4 py-3">
+                  <Link
+                    href={mapHref(shown)}
+                    onClick={onClose}
+                    className={buttonVariants({ size: "lg", className: "h-11 w-full text-base" })}
+                  >
+                    マップで場所を見る
+                  </Link>
+                </div>
+              )}
             </>
           )}
         </Dialog.Popup>

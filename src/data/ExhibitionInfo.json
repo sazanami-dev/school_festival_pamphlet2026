@@ -1,332 +1,282 @@
 [
   {
     "id": "ex-01",
-    "exhibitionName": "チーム出the印",
-    "floor": "2",
-    "location": "T28",
-    "startTime": null,
-    "endTime": null,
-    "genre": ["物販", "展示", "体験"],
-    "description": "チーム出the印 オリジナルグッズの販売、似顔絵屋、作品の展示をします"
-  },
-  {
-    "id": "ex-02",
-    "exhibitionName": "クラブ出the印",
-    "floor": "2",
-    "location": "T27",
-    "startTime": null,
-    "endTime": null,
-    "genre": ["飲食", "イベント"],
-    "description": "クラブ出the印 音楽と映像を流し、教室をクラブのような空間に！缶ドリンク販売中！"
-  },
-  {
-    "id": "ex-03",
-    "exhibitionName": "模擬店（フードコーナー）",
+    "exhibitionName": "鳥庶民",
     "floor": "1",
-    "location": "エレベーターホール&廊下",
+    "location": "f1-food-space-1",
+    "locationName": "飲食店エリア",
     "startTime": null,
     "endTime": null,
     "genre": ["飲食"],
-    "description": "たこ焼き、からあげ、ピザ、チャーハン、たません、ポップコーンがあります"
+    "description": "おいしい焼き鳥やってるよ！みんな来てね"
+  },
+  {
+    "id": "ex-02",
+    "exhibitionName": "ミスドーナッツ",
+    "floor": "1",
+    "location": "f1-food-space-1",
+    "locationName": "飲食店エリア",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["飲食"],
+    "description": "あのもっちもちしたドーナッツをここで味わってみませんか？"
+  },
+  {
+    "id": "ex-03",
+    "exhibitionName": "炎上ポップコーン",
+    "floor": "1",
+    "location": "f1-food-space-1",
+    "locationName": "飲食店エリア",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["飲食"],
+    "description": "今年も大人気ポップコーンが帰ってくる…さざなみ開発、渾身の一品"
   },
   {
     "id": "ex-04",
-    "exhibitionName": "休憩スペース",
+    "exhibitionName": "アルティメットたません",
     "floor": "1",
-    "location": "T11",
+    "location": "f1-food-space-1",
+    "locationName": "飲食店エリア",
     "startTime": null,
     "endTime": null,
-    "genre": ["休憩", "展示"],
-    "description": "休憩スペース 3階イベント会場の様子を同時中継！"
+    "genre": ["飲食"],
+    "description": "グローバルなたませんと日本のたませんを楽しみましょう。イベントで上位ランクにはいったらトッピング無料券がもらえます"
   },
   {
     "id": "ex-05",
-    "exhibitionName": "チャリティー餅つき大会",
+    "exhibitionName": "キッチン早川",
     "floor": "1",
-    "location": "正面玄関",
-    "startTime": "12:00",
-    "endTime": "13:00",
-    "genre": ["飲食", "イベント"],
-    "description": "チャリティー餅つき大会"
+    "location": "f1-food-space-1",
+    "locationName": "飲食店エリア",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["飲食"],
+    "description": "ポテト、からあげ、ウインナー。ゲームサイエンス学科担任、美食家早川先生大絶賛！！おいしい揚げ物あります「こういうのでいいんだよ」"
   },
   {
     "id": "ex-06",
-    "exhibitionName": "イベントなし",
-    "floor": "2",
-    "location": "",
+    "exhibitionName": "あしたのおさんぽ 2026 -はじめの一歩-",
+    "floor": "1",
+    "location": "f1-reception-1",
+    "locationName": "エントランスホール",
     "startTime": null,
     "endTime": null,
-    "genre": ["その他"],
-    "description": "イベントはありません"
+    "genre": ["展示", "物販"],
+    "description": "どこ行く？知らん。じゃあ歩くか。「歩く理由を作る」おさんぽアプリを展示します。グッズも出すよ〜"
   },
   {
     "id": "ex-07",
-    "exhibitionName": "蒲公英＆CRAFTCUBE",
-    "floor": "3",
-    "location": "ラウンジ",
+    "exhibitionName": "ステラコーヒー",
+    "floor": "1",
+    "location": "f1-reception-1",
+    "locationName": "エントランスホール",
     "startTime": null,
     "endTime": null,
-    "genre": ["物販", "体験"],
-    "description": "蒲公英＆CRAFTCUBE クラフトワークの販売・体験"
+    "genre": ["飲食"],
+    "description": "情報系の先生が自ら焙煎を行ったオリジナルブレンドコーヒーを提供します。"
   },
   {
     "id": "ex-08",
-    "exhibitionName": "ゲーム売店",
-    "floor": "3",
-    "location": "ラウンジ",
+    "exhibitionName": "Trident Coffee",
+    "floor": "2",
+    "location": "f2-lounge-1",
+    "locationName": "ラウンジ",
     "startTime": null,
     "endTime": null,
-    "genre": ["物販", "展示"],
-    "description": "ゲーム売店 ゲームをCDにして販売"
+    "genre": ["飲食"],
+    "description": "ドリップしたてのコーヒーとトッピングで学園祭のお供にどうぞ！！"
   },
   {
     "id": "ex-09",
-    "exhibitionName": "ぺんさんど SHOP vol.1",
+    "exhibitionName": "クラブ出the印",
     "floor": "3",
-    "location": "ラウンジ",
+    "location": "T31",
     "startTime": null,
     "endTime": null,
-    "genre": ["物販"],
-    "description": "ぺんさんど SHOP vol.1 オリジナルキャラクター「ぺんさんど」のグッズ販売"
+    "genre": ["音楽", "映像"],
+    "description": "音と映像に酔いしれろ！"
   },
   {
     "id": "ex-10",
-    "exhibitionName": "HAPPY☆MUSIC ライブイベント",
+    "exhibitionName": "チーム出the印",
     "floor": "3",
-    "location": "T21",
-    "startTime": "13:00",
-    "endTime": "14:30",
-    "genre": ["イベント", "音楽"],
-    "description": "HAPPY☆MUSIC ライブイベント"
+    "location": "T32",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["物販"],
+    "description": "おしゃれで可愛いグッズが盛りだくさん！"
   },
   {
     "id": "ex-11",
-    "exhibitionName": "CGスペシャリスト学科 TCコンペ表彰式",
+    "exhibitionName": "404♡魔法迷界（マジカルノットファウンド）",
     "floor": "3",
-    "location": "T22",
-    "startTime": "10:30",
-    "endTime": "11:00",
-    "genre": ["イベント", "表彰式"],
-    "description": "CGスペシャリスト学科 TCコンペ表彰式"
+    "location": "T33",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["物販", "体験"],
+    "description": "あなたを魔法の世界へご招待♡運命のカードを引いて異世界の住人になっちゃおう♡"
   },
   {
     "id": "ex-12",
-    "exhibitionName": "コスプレコンテスト アピールタイム",
+    "exhibitionName": "mipoki&CRAFTCUBE",
     "floor": "3",
-    "location": "T22",
-    "startTime": "11:00",
-    "endTime": "11:45",
-    "genre": ["イベント", "コンテスト"],
-    "description": "コスプレコンテスト アピールタイム"
+    "location": "T34",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["物販", "体験"],
+    "description": "電子・デジタル系アクセサリーの販売、製作体験"
   },
   {
     "id": "ex-13",
-    "exhibitionName": "学園祭フリーステージ",
+    "exhibitionName": "さざなみ開発",
     "floor": "3",
-    "location": "T22",
-    "startTime": "12:15",
-    "endTime": "13:00",
-    "genre": ["イベント", "パフォーマンス"],
-    "description": "学園祭フリーステージ 今年は「ダンス」「ヲタ芸」がエントリー"
+    "location": "T36",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["展示", "物販"],
+    "description": "製作物の展示及び販売"
   },
   {
     "id": "ex-14",
-    "exhibitionName": "コスプレコンテスト 表彰式",
-    "floor": "3",
-    "location": "T22",
-    "startTime": "14:15",
-    "endTime": "14:45",
-    "genre": ["イベント", "表彰式"],
-    "description": "コスプレコンテスト 表彰式"
+    "exhibitionName": "ゲーム開発研究部",
+    "floor": "4",
+    "location": "f4-learning-commons-1",
+    "locationName": "ラーニングコモンズ",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["展示", "ゲーム"],
+    "description": "コンテストに向けて制作中のゲームを展示しています！お気軽にお立ち寄りください！"
   },
   {
     "id": "ex-15",
-    "exhibitionName": "ビンゴ大会",
-    "floor": "3",
-    "location": "T22",
-    "startTime": "15:00",
-    "endTime": "16:00",
-    "genre": ["イベント", "ゲーム"],
-    "description": "ビンゴ大会 今年も豪華賞品が目白押し！"
+    "exhibitionName": "あるてぃめっとげーせん",
+    "floor": "4",
+    "location": "T41",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["ゲーム"],
+    "description": "3つのゲームでスタッフと戦い、スコアを稼ごう！スコアによって景品が豪華に！"
   },
   {
     "id": "ex-16",
-    "exhibitionName": "実行委員主催ゲーム大会",
+    "exhibitionName": "縁日早川",
     "floor": "4",
     "location": "T42",
     "startTime": null,
     "endTime": null,
-    "genre": ["ゲーム", "イベント"],
-    "description": "実行委員主催ゲーム大会 いろんなゲームで対戦して景品をゲットしよう！"
+    "genre": ["ゲーム", "体験"],
+    "description": "主に縁日周りの企画が複数あります！景品にお菓子があるよ！！！"
   },
   {
     "id": "ex-17",
-    "exhibitionName": "トライ電鉄！？ご当地クイズで物件ゲット",
+    "exhibitionName": "リアルバックショットルーレット",
     "floor": "4",
     "location": "T43",
     "startTime": null,
     "endTime": null,
-    "genre": ["ゲーム", "体験"],
-    "description": "トライ電鉄！？ご当地クイズで物件ゲット ダーツを投げて当たった場所のクイズに正解して景品をゲットだ！"
+    "genre": ["ゲーム"],
+    "description": "魂を賭けろ"
   },
   {
     "id": "ex-18",
-    "exhibitionName": "GT卒業制作展示",
-    "floor": "5",
-    "location": "T51,T53",
+    "exhibitionName": "運試し屋",
+    "floor": "4",
+    "location": "T44",
     "startTime": null,
     "endTime": null,
-    "genre": ["展示", "ゲーム"],
-    "description": "GT卒業制作展示 ゲームサイエンス学科３年生の卒業制作展示"
+    "genre": ["ゲーム"],
+    "description": "豪華景品あり！？"
   },
   {
     "id": "ex-19",
-    "exhibitionName": "ゲーム展示 of Freshman",
-    "floor": "5",
-    "location": "T53",
+    "exhibitionName": "NekoNyan1000%LoveBeamMecchakawaiiSugoiCafe",
+    "floor": "4",
+    "location": "T45",
     "startTime": null,
     "endTime": null,
-    "genre": ["展示", "ゲーム"],
-    "description": "ゲーム展示 of Freshman 自作ゲームの展示"
+    "genre": ["飲食", "体験"],
+    "description": "留学生とコスプレをして\"可愛く\"接客します。チェキもあるので是非来てください！！"
   },
   {
     "id": "ex-20",
-    "exhibitionName": "ゲーム開発研究部のたのしいゲーム体験！",
+    "exhibitionName": "ONE SHOT CAFE",
     "floor": "5",
-    "location": "T54",
+    "location": "f5-trident-lab-1",
+    "locationName": "トライデントラボ",
     "startTime": null,
     "endTime": null,
-    "genre": ["展示", "ゲーム", "体験"],
-    "description": "ゲーム開発研究部のたのしいゲーム体験！ ゲーム開発研究部で制作したゲームを展示"
+    "genre": ["飲食", "ゲーム"],
+    "description": "西部のお手頃ワンショットカフェ！！早撃ち勝負のミニゲームに勝利すると、ステキなご褒美が…？"
   },
   {
     "id": "ex-21",
-    "exhibitionName": "さざなみ開発",
+    "exhibitionName": "ストリートファイター6トーナメント大会",
     "floor": "5",
-    "location": "T55",
+    "location": "T56",
     "startTime": null,
     "endTime": null,
-    "genre": ["展示", "ゲーム", "体験", "物販"],
-    "description": "さざなみ開発 Webアプリやゲームなどの展示・体験・物販"
+    "genre": ["ゲーム", "イベント"],
+    "description": "トーナメント参加申し込みは11:30までにお願いします。試合開始は12:00です。トーナメント終了後にプロとの組手です。"
   },
   {
     "id": "ex-22",
-    "exhibitionName": "TRIDENT EXCHANGE PROGRAM 2025",
-    "floor": "5",
-    "location": "エレベーターホール",
-    "startTime": null,
-    "endTime": null,
-    "genre": ["展示"],
-    "description": "TRIDENT EXCHANGE PROGRAM 2025 海外交流に参加した学生の共同プロジェクト"
-  },
-  {
-    "id": "ex-23",
-    "exhibitionName": "ダーツランド",
+    "exhibitionName": "卒業制作作品展示",
     "floor": "6",
-    "location": "T61",
-    "startTime": null,
-    "endTime": null,
-    "genre": ["ゲーム", "体験"],
-    "description": "ダーツランド"
-  },
-  {
-    "id": "ex-24",
-    "exhibitionName": "射的練習場",
-    "floor": "6",
-    "location": "T62",
-    "startTime": null,
-    "endTime": null,
-    "genre": ["ゲーム", "体験"],
-    "description": "射的練習場"
-  },
-  {
-    "id": "ex-25",
-    "exhibitionName": "おいでよ じゃっくぽっとの沼",
-    "floor": "6",
-    "location": "T63",
-    "startTime": null,
-    "endTime": null,
-    "genre": ["ゲーム", "体験"],
-    "description": "おいでよ じゃっくぽっとの沼"
-  },
-  {
-    "id": "ex-26",
-    "exhibitionName": "ボードゲームでエンジョイしようぜ！",
-    "floor": "6",
-    "location": "T64",
-    "startTime": null,
-    "endTime": null,
-    "genre": ["ゲーム", "体験"],
-    "description": "ボードゲームでエンジョイしようぜ！"
-  },
-  {
-    "id": "ex-27",
-    "exhibitionName": "天国・地獄・大地獄 千本くじ",
-    "floor": "6",
-    "location": "T66",
-    "startTime": null,
-    "endTime": null,
-    "genre": ["ゲーム", "体験"],
-    "description": "天国・地獄・大地獄 千本くじ"
-  },
-  {
-    "id": "ex-28",
-    "exhibitionName": "謎解きの森",
-    "floor": "6",
-    "location": "エレベーターホール",
-    "startTime": null,
-    "endTime": null,
-    "genre": ["ゲーム", "体験"],
-    "description": "謎解きの森 ポスターの謎を解いて、答えを導き出す謎解き企画！"
-  },
-  {
-    "id": "ex-29",
-    "exhibitionName": "God Field交流会",
-    "floor": "7",
-    "location": "T73",
-    "startTime": null,
-    "endTime": null,
-    "genre": ["ゲーム", "イベント"],
-    "description": "God Field交流会 参加者にはお菓子、勝者には景品をご用意！"
-  },
-  {
-    "id": "ex-30",
-    "exhibitionName": "スマブラSP最強決定戦",
-    "floor": "7",
-    "location": "T72",
-    "startTime": null,
-    "endTime": null,
-    "genre": ["ゲーム", "イベント"],
-    "description": "スマブラSP最強決定戦 学内外問わず、トーナメント方式で最強を決める！"
-  },
-  {
-    "id": "ex-31",
-    "exhibitionName": "ストリートファイター６大会",
-    "floor": "7",
-    "location": "T71",
-    "startTime": "12:00",
-    "endTime": null,
-    "genre": ["ゲーム", "イベント"],
-    "description": "ストリートファイター６大会 11:30までエントリー受付、12時からトーナメント開始"
-  },
-  {
-    "id": "ex-32",
-    "exhibitionName": "シミュレーション部",
-    "floor": "7",
-    "location": "T76",
+    "location": "T62,T63,T64",
     "startTime": null,
     "endTime": null,
     "genre": ["展示", "体験"],
-    "description": "シミュレーション部 ログインパスワードの暗記テスト・結果表示"
+    "description": "試遊していただき、アンケートにお答えください！"
   },
   {
-    "id": "ex-33",
+    "id": "ex-23",
+    "exhibitionName": "ゲームセンター A.O.K.I",
+    "floor": "7",
+    "location": "T72,T73",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["ゲーム"],
+    "description": "マリオカートが激走！オリジナルのレアなレトロゲームなど楽しく遊べるゲームセンターへおいでよ！！"
+  },
+  {
+    "id": "ex-24",
+    "exhibitionName": "サタデートライデントフィーバー",
+    "floor": "7",
+    "location": "T72,T73",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["ゲーム", "イベント"],
+    "description": "マリオカートの対戦会と各種ゲームの交流会を開催します！みんなでワイワイ盛り上がろう！"
+  },
+  {
+    "id": "ex-25",
+    "exhibitionName": "スポーツ体験クラブ！",
+    "floor": "7",
+    "location": "T72,T73",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["体験"],
+    "description": "ダーツや射的、モルックなどいろいろなスポーツの体験をしてみよう。（景品もあるよ！）"
+  },
+  {
+    "id": "ex-26",
+    "exhibitionName": "デュエランド",
+    "floor": "7",
+    "location": "T74",
+    "startTime": null,
+    "endTime": null,
+    "genre": ["ゲーム", "イベント"],
+    "description": "大会やるから皆来てね！！優勝したら1BOX貰えるよ"
+  },
+  {
+    "id": "ex-27",
     "exhibitionName": "CG作品展示・上映",
     "floor": "8",
-    "location": "T86",
+    "location": "T81,T86",
     "startTime": null,
     "endTime": null,
     "genre": ["展示", "映像"],
-    "description": "CG作品展示・上映 CGスペシャリスト学科1・2年生の作品展示・上演"
+    "description": "CGスペシャリスト学科 1年生/2年生の作品展示"
   }
 ]

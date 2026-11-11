@@ -94,16 +94,28 @@ function roomBox(room: SVGGElement) {
   return room.querySelector<SVGGraphicsElement>(":scope > :first-child")?.getBBox() ?? null;
 }
 
-/** 選んだ教室を青い太枠で囲む（設備には枠線が無いものもあるので、元の線ではなく新しく描く） */
+/** 選んだ教室を青い太枠で囲む（角が欠けた区画もあるので、四角ではなく教室の背景の形をなぞる） */
 function drawSelection(layer: SVGGElement, room: SVGGElement) {
-  const box = roomBox(room);
-  if (!box) return;
-  layer.append(
-    svgElement("rect", { x: box.x, y: box.y, width: box.width, height: box.height, fill: "none", stroke: "#2563eb", "stroke-width": 4 }),
-  );
+  const shape = room.firstElementChild?.cloneNode() as SVGElement | undefined;
+  if (!shape) return;
+  shape.removeAttribute("id");
+  shape.setAttribute("fill", "none");
+  shape.setAttribute("stroke", "#2563eb");
+  shape.setAttribute("stroke-width", "4");
+  layer.append(shape);
 }
 
-/** 教室の左上に「開催中」、右上に出展の件数（2件以上のとき）のバッジを描く */
+/** 右上の件数バッジの中心。角が欠けた区画では、バッジが区画の中に入るまで下にずらす */
+function badgeCenter(room: SVGGElement, box: DOMRect, radius: number) {
+  const x = box.x + box.width - 15;
+  const shape = room.firstElementChild as SVGGeometryElement;
+  for (let y = box.y + 15; y < box.y + box.height; y += 4) {
+    if (shape.isPointInFill(new DOMPoint(x, y - radius))) return { x, y };
+  }
+  return { x, y: box.y + 15 };
+}
+
+/** 教室の左上に「開催中」、右上に出展の件数のバッジを描く */
 function drawBadges(layer: SVGGElement, room: SVGGElement, info: RoomInfo, live: boolean) {
   const box = roomBox(room);
   if (!box) return;
@@ -115,9 +127,8 @@ function drawBadges(layer: SVGGElement, room: SVGGElement, info: RoomInfo, live:
       svgElement("text", { ...label, x: box.x + 30, y: box.y + 15, "font-size": 13 }, "開催中"),
     );
   }
-  if (info.exhibitions.length > 1) {
-    const cx = box.x + box.width - 15;
-    const cy = box.y + 15;
+  if (info.exhibitions.length > 0) {
+    const { x: cx, y: cy } = badgeCenter(room, box, 11);
     layer.append(
       svgElement("circle", { cx, cy, r: 11, fill: "#2563eb" }),
       svgElement("text", { ...label, x: cx, y: cy, "font-size": 14 }, String(info.exhibitions.length)),
