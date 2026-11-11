@@ -213,6 +213,9 @@ function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom, onSwipe }: Flo
     const room = (e.target as Element).closest<SVGGElement>(
       'g[data-room-state="content"], g[data-room-state="live"]',
     );
+    // 教室を選ぶとモーダルが開く。Android の Chrome は指を離したあとに同じ場所へ click を送るので、
+    // そのままだと開いたばかりのモーダルの中（一覧の1件目など）を押したことになってしまう
+    if (room) swallowNextClick();
     onSelectRoom(room?.id ?? null);
   }
 
@@ -237,6 +240,16 @@ function FloorSvg({ floor, selectedRoom, focusRoom, onSelectRoom, onSwipe }: Flo
       </div>
     </TransformWrapper>
   );
+}
+
+/** タップの直後に届く click を1回だけ捨てる（click が来ない端末もあるので、少し待っても来なければやめる） */
+function swallowNextClick() {
+  const swallow = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  window.addEventListener("click", swallow, { capture: true, once: true });
+  setTimeout(() => window.removeEventListener("click", swallow, { capture: true }), 500);
 }
 
 /** 読み込み中に表示する、マップの枠と同じ大きさのプレースホルダー */
