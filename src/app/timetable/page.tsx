@@ -4,6 +4,8 @@
 import { useRef, useState, useEffect } from "react";
 import eventsData from "../../data/event.json";
 import { useRouter } from "next/navigation";
+import { getGenreColor } from "@/components/ExhibitionDetailModal";
+import { cn } from "@/lib/utils";
 
 interface Event {
   id: string;
@@ -264,7 +266,7 @@ export default function Timetable() {
                       {event.genre.map((genre) => (
                         <span
                           key={genre}
-                          className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700"
+                          className={cn("rounded-full px-3 py-1 text-xs font-medium", getGenreColor(genre).badge)}
                         >
                           {genre}
                         </span>
@@ -342,7 +344,7 @@ export default function Timetable() {
                 {selectedEvent.genre.map((genre) => (
                   <span
                     key={genre}
-                    className="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700"
+                    className={cn("rounded-full px-3 py-1 text-sm", getGenreColor(genre).badge)}
                   >
                     {genre}
                   </span>

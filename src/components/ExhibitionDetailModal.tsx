@@ -67,6 +67,7 @@ const GENRE_COLORS: Record<string, GenreColor> = {
   表彰式: { badge: "bg-lime-100 text-lime-800", dot: "bg-lime-500" },
   参加型: { badge: "bg-teal-100 text-teal-800", dot: "bg-teal-500" },
   休憩: { badge: "bg-cyan-100 text-cyan-800", dot: "bg-cyan-500" },
+  抽選: { badge: "bg-green-100 text-green-800", dot: "bg-green-500" },
 };
 
 /** 上の一覧にないジャンル（「その他」など）の色 */
