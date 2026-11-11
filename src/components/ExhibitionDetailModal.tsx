@@ -102,6 +102,10 @@ export function formatPlace(item: { floor: string; location: string; locationNam
   return place ? `${item.floor}F ${place}` : `${item.floor}F`;
 }
 
+/** モーダルの一番下のボタン（「マップで場所を見る」など）。タイムテーブルの「マップで場所を見る」と同じ青・太さにする */
+export const MODAL_ACTION_CLASS =
+  "h-11 w-full bg-blue-600 text-base font-semibold text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700";
+
 /** ジャンルの数だけ色付きバッジを並べる */
 export function GenreBadges({ genres, className }: { genres: string[]; className?: string }) {
   return (
@@ -216,7 +220,7 @@ export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink
                   <Link
                     href={mapHref(shown)}
                     onClick={onClose}
-                    className={buttonVariants({ size: "lg", className: "h-11 w-full text-base" })}
+                    className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS)}
                   >
                     マップで場所を見る
                   </Link>
