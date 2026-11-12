@@ -7,7 +7,7 @@ import { floorButtonClass } from "@/components/floorButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ExhibitionDetailModal from "@/components/ExhibitionDetailModal";
 import ExhibitionSheet, { SHEET_PEEK } from "./ExhibitionSheet";
-import FloorMap, { FloorMapSkeleton } from "./FloorMap";
+import FloorMap, { FloorMapSkeleton, type HiddenUi } from "./FloorMap";
 import { floors, type Floor } from "./floors";
 import RoomDetailModal from "./RoomDetailModal";
 import FacilityDetailModal from "./FacilityDetailModal";
@@ -61,6 +61,8 @@ function FloorTabs() {
   const [detailFromSheet, setDetailFromSheet] = useState(false);
   // 増えるたびにボトムシートを一番下まで下げる（「マップで場所を見る」でマップを見せるため）
   const [sheetCollapse, setSheetCollapse] = useState(0);
+  // マップを操作・拡大している間は、マップを見やすくするため階ボタンとボトムシートを隠す
+  const [hiddenUi, setHiddenUi] = useState<HiddenUi>(null);
   // 案内を開いている設備（マックスマートなど）
   const [facility, setFacility] = useState<Facility | null>(null);
 
@@ -89,6 +91,8 @@ function FloorTabs() {
     setListedRoom(null);
     setDetail(null);
     setFacility(null);
+    // 新しい階のマップは等倍で表示されるので、隠していたものを戻す
+    setHiddenUi(null);
   }
 
   // ?room= が新しく指定されたら（最初に開いたときも含む）、その教室を選ぶ
@@ -188,9 +192,14 @@ function FloorTabs() {
         {/* 画面が低い（Android やイベントのお知らせが出ているとき）と8個のボタンが入りきらないので、
             列の高さはマップの枠まで（max-h-full）にし、まずボタンを低くして収める。それでも入らなければ列をスクロールする
             （中央寄せのままだと上のボタンにスクロールで届かなくなるので上詰め。収まるときは列ごと中央に置かれる） */}
+        {/* マップを操作・拡大している間は隠す（場所は空けたままにして、マップの大きさが変わらないようにする） */}
         <TabsList
           ref={floorListRef}
-          className="max-h-full w-10 shrink-0 justify-start gap-1.5 self-center overflow-y-auto bg-transparent p-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          inert={hiddenUi !== null}
+          className={cn(
+            "max-h-full w-10 shrink-0 justify-start gap-1.5 self-center overflow-y-auto bg-transparent p-0 transition-opacity duration-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            hiddenUi !== null && "opacity-0",
+          )}
         >
           {floorsTopDown.map((f) => (
             <TabsTrigger
@@ -229,6 +238,8 @@ function FloorTabs() {
                 focusRoom={selected?.center ? selected : null}
                 onSelectRoom={tapRoom}
                 onSwipe={swipeFloor}
+                hidden={hiddenUi}
+                onHiddenChange={setHiddenUi}
               />
             </TabsContent>
           ))}
@@ -239,6 +250,7 @@ function FloorTabs() {
         selectedRoom={selectedRoom}
         onSelectExhibition={tapExhibition}
         collapseRequest={sheetCollapse}
+        hidden={hiddenUi !== null}
       />
       <RoomDetailModal
         room={detail ? null : listedRoom}

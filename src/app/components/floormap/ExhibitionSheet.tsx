@@ -24,6 +24,8 @@ type ExhibitionSheetProps = {
   onSelectExhibition: (exhibition: Exhibition) => void;
   /** この値が変わるたびに、シートを一番下（見出しだけ）まで下げる */
   collapseRequest: number;
+  /** マップを操作・拡大している間 true。マップを広く見せるため、シートを透明にして触れなくする */
+  hidden: boolean;
 };
 
 /** 表示中の階の出展一覧。マップの下からのぞかせ、引き上げると一覧が広がる */
@@ -32,6 +34,7 @@ export default function ExhibitionSheet({
   selectedRoom,
   onSelectExhibition,
   collapseRequest,
+  hidden,
 }: ExhibitionSheetProps) {
   const exhibitions = getExhibitionsOnFloor(floor);
   // どの階で開いた高さかも覚えておき、階を切り替えたら閉じた状態に戻す
@@ -69,9 +72,12 @@ export default function ExhibitionSheet({
       {/* ページ（max-w-md）と同じ幅にそろえる
           --drawer-snap-point-offset（画面の下に隠れている高さ）は子要素に引き継がれないので、別の変数に移しておく */}
       <DrawerContent
+        inert={hidden}
         className={cn(
           "mx-auto max-w-md shadow-[0_-4px_16px_rgb(0_0_0/0.08)] [--sheet-hidden:var(--drawer-snap-point-offset)]",
           !ready && "transition-none",
+          // シートは元から opacity にもアニメーションがかかる
+          hidden && "pointer-events-none opacity-0",
         )}
       >
         <DrawerHeader className="flex-row items-baseline justify-between pt-3 pb-3 group-data-[swipe-axis=y]/drawer-popup:text-left">
