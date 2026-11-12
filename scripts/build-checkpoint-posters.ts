@@ -4,14 +4,15 @@
  *   node --env-file=.env.production scripts/build-checkpoint-posters.ts
  *   （npm run posters でも可。そのときは CHECKPOINT_SECRET を環境変数で渡す）
  *
- * src/data/checkpoints.json から、A5 の掲示物を A4 横に2枚ずつ並べた HTML と、QR だけの SVG を print/ に出力する。
+ * src/data/checkpoints.json から、A4 縦1枚に1か所ずつの掲示物の HTML と、QR だけの SVG を print/ に出力する。
+ * デザインは scripts/学園祭2026チェックポイント背景.svg で、その白い枠に QR を重ねる。
  * HTML をブラウザで開いて「PDFに保存」→ 印刷する。
  *
  * 出力にはトークンが入るので、print/ はコミットしない（.gitignore 済み）。
  * 空の鍵や開発用の鍵で本番と違うQRを刷らないよう、CHECKPOINT_SECRET が無ければ止まる。
  * トークンの計算はサーバーと同じ関数（checkpoint-token-core.ts）を使う。
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import QRCode from "qrcode";
 import { computeCheckpointToken } from "../src/lib/rally/checkpoint-token-core.ts";
@@ -22,7 +23,12 @@ type RallyConfig = { requiredStamps: number };
 
 const ROOT = join(import.meta.dirname, "..");
 const OUT_DIR = join(ROOT, "print");
-const BASE_URL = (process.env.RALLY_BASE_URL || "https://fes.sazanami.dev").replace(/\/+$/, "");
+const BACKGROUND_SRC = join(import.meta.dirname, "学園祭2026チェックポイント背景.svg");
+const BACKGROUND_FILE = "checkpoint-bg.svg";
+const PRODUCTION_URL = "https://fes.sazanami.dev";
+const BASE_URL = (process.env.RALLY_BASE_URL || PRODUCTION_URL).replace(/\/+$/, "");
+// 本番以外の URL で作ったものは、本番の掲示物と混ざらないように目印を付ける
+const TEST_MARK = BASE_URL === PRODUCTION_URL ? "" : `【テスト用 ${BASE_URL}】`;
 
 const secret = process.env.CHECKPOINT_SECRET;
 if (!secret) {
@@ -50,27 +56,15 @@ const posters: Poster[] = await Promise.all(
 );
 
 function posterHtml(poster: Poster): string {
-  const { checkpoint } = poster;
-  const place = [checkpoint.floor && `${checkpoint.floor}F`, checkpoint.location].filter(Boolean).join(" ");
+  // 背景のデザインにロゴ・見出し・説明文まで入っているので、白い枠の上に出展名、枠に QR、その下に手打ち用のコードを置くだけ
   return `
     <section class="poster">
-      <p class="title">学園祭2026 スタンプラリー</p>
-      <p class="number">CHECKPOINT No.${poster.number}</p>
-      <p class="name">${escapeHtml(checkpoint.name)}（${escapeHtml(place)}）</p>
+      <img class="bg" src="${BACKGROUND_FILE}" alt="">
+      <p class="name">${escapeHtml(poster.checkpoint.name)}</p>
       <div class="qr">${poster.svg}</div>
-      <p class="code">コード：${formatCode(poster.code)}</p>
-      <div class="guide">
-        <p>パンフレットの「スタンプ」→「QRを読む」で読み取ってね</p>
-        <p>スマホのカメラで読んでもOK</p>
-        <p>${rally.requiredStamps}個集めると景品と交換できます</p>
-      </div>
+      <p class="code">${formatCode(poster.code)}</p>
+      ${TEST_MARK && `<p class="test">${escapeHtml(TEST_MARK)}</p>`}
     </section>`;
-}
-
-// A4 横の用紙1枚に A5 を2枚。切り離して使う
-const sheets: string[] = [];
-for (let i = 0; i < posters.length; i += 2) {
-  sheets.push(`<div class="sheet">${posters.slice(i, i + 2).map(posterHtml).join("")}</div>`);
 }
 
 const html = `<!doctype html>
@@ -79,37 +73,53 @@ const html = `<!doctype html>
 <meta charset="utf-8">
 <title>スタンプラリー チェックポイント掲示物</title>
 <style>
-  @page { size: A4 landscape; margin: 0; }
+  @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; margin: 0; }
   body { font-family: "Hiragino Sans", "Noto Sans JP", sans-serif; color: #000; background: #fff; }
-  .sheet { width: 297mm; height: 210mm; display: flex; page-break-after: always; }
+  /* A4 縦の用紙1枚に1か所。背景 SVG（1326×1877）の座標を --u 倍して mm にする */
   .poster {
-    width: 148.5mm; height: 210mm; padding: 14mm 12mm;
-    display: flex; flex-direction: column; align-items: center; text-align: center;
-    border-right: 0.2mm dashed #999;
+    --u: calc(210mm / 1326);
+    position: relative; width: 210mm; height: 297mm; overflow: hidden;
+    page-break-after: always;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
-  .poster:last-child { border-right: none; }
-  .title { font-size: 7mm; font-weight: bold; }
-  .number { margin-top: 3mm; font-size: 6mm; letter-spacing: 0.5mm; }
-  .name { margin-top: 2mm; font-size: 6mm; font-weight: bold; }
-  /* 6cm角以上。QR の SVG には4マスの余白が含まれる */
-  .qr { margin-top: 6mm; width: 80mm; height: 80mm; }
-  .qr svg { width: 100%; height: 100%; }
-  .code { margin-top: 2mm; font-size: 6mm; font-family: ui-monospace, Menlo, monospace; letter-spacing: 0.6mm; }
-  .guide { margin-top: auto; font-size: 4.2mm; line-height: 1.7; }
+  .bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  /* 背景の白い枠（x=328, y=597, 682角）。約108mm角で、QR の SVG には4マスの余白が含まれる */
+  .qr {
+    position: absolute; left: calc(328 * var(--u)); top: calc(597 * var(--u));
+    width: calc(682 * var(--u)); height: calc(682 * var(--u));
+  }
+  .qr svg { display: block; width: 100%; height: 100%; }
+  /* 「チェックポイント」の帯（下端 y=457）と白い枠の間。枠のすぐ上に下揃えで置く */
+  .name {
+    position: absolute; left: 0; right: 0; bottom: calc((1877 - 572) * var(--u));
+    text-align: center; font-size: 9mm; font-weight: bold; line-height: 1.2;
+  }
+  /* 「参加もこちらから」と下の帯（y=1515）の間 */
+  .code {
+    position: absolute; left: 0; right: 0; top: calc(1378 * var(--u));
+    text-align: center; font-size: 12mm; font-weight: bold; line-height: 1.2;
+    font-family: ui-monospace, Menlo, monospace; letter-spacing: 1mm;
+  }
+  .test {
+    position: absolute; left: 0; right: 0; top: calc(1478 * var(--u));
+    text-align: center; font-size: 3.2mm; color: #333;
+  }
   @media screen {
-    body { background: #ddd; padding: 10mm; }
-    .sheet { background: #fff; margin: 0 auto 10mm; box-shadow: 0 1mm 4mm rgb(0 0 0 / 0.2); }
+    body { background: #999; padding: 10mm; }
+    .poster { margin: 0 auto 10mm; box-shadow: 0 1mm 4mm rgb(0 0 0 / 0.3); }
   }
 </style>
 </head>
 <body>
-${sheets.join("\n")}
+${posters.map(posterHtml).join("\n")}
 </body>
 </html>
 `;
 
 mkdirSync(join(OUT_DIR, "qr"), { recursive: true });
+// 背景は 12MB ほどあるので HTML に埋め込まず、隣にコピーして参照する
+copyFileSync(BACKGROUND_SRC, join(OUT_DIR, BACKGROUND_FILE));
 writeFileSync(join(OUT_DIR, "checkpoints.html"), html);
 for (const poster of posters) {
   writeFileSync(join(OUT_DIR, "qr", `${poster.checkpoint.id}.svg`), poster.svg);
