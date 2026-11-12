@@ -11,7 +11,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "floormaps": "node scripts/build-floormaps.mjs"
+    "floormaps": "node scripts/build-floormaps.mjs",
+    "posters": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/build-checkpoint-posters.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
