@@ -12,6 +12,14 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       # Windows でファイル変更が反映されない対策（ポーリング間隔ms）。0 以下/空で無効
       NEXT_POLL_INTERVAL_MS: ${NEXT_POLL_INTERVAL_MS:-1000}
+      # スタンプラリー（値は .env から渡す）
+      RALLY_SECRET: ${RALLY_SECRET:-}
+      CHECKPOINT_SECRET: ${CHECKPOINT_SECRET:-}
+      STAFF_PIN: ${STAFF_PIN:-}
+      RALLY_DATES: ${RALLY_DATES:-}
+      RALLY_OPEN: ${RALLY_OPEN:-}
+      RALLY_CLOSE: ${RALLY_CLOSE:-}
+      RALLY_EXCHANGE_CLOSE: ${RALLY_EXCHANGE_CLOSE:-}
     volumes:
       - .:/app
       # ホスト(macOS)の node_modules / .next でコンテナ側を上書きしない
