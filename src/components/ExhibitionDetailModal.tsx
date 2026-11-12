@@ -141,10 +141,15 @@ type Props = {
   onClose: () => void;
   /** 「マップで場所を見る」を出すか。マップから開くときは隠す */
   showMapLink?: boolean;
+  /**
+   * 「マップで場所を見る」を押したときの処理。マップ画面の中で開いたときに渡す
+   * （ページを移動せず、その場でマップの教室へ移動するため）。無ければマップ画面へのリンクになる
+   */
+  onShowOnMap?: (exhibition: Exhibition) => void;
 };
 
 /** 出展の詳細モーダル（画面中央に表示する） */
-export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink = true }: Props) {
+export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink = true, onShowOnMap }: Props) {
   // 閉じるアニメーションの間も中身を表示し続けるため、最後に開いた出展を覚えておく
   const [shown, setShown] = useState(exhibition);
   if (exhibition && exhibition !== shown) {
@@ -217,13 +222,23 @@ export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink
 
               {showMapLink && (
                 <div className="border-t px-4 py-3">
-                  <Link
-                    href={mapHref(shown)}
-                    onClick={onClose}
-                    className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS)}
-                  >
-                    マップで場所を見る
-                  </Link>
+                  {onShowOnMap ? (
+                    <button
+                      type="button"
+                      onClick={() => onShowOnMap(shown)}
+                      className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS)}
+                    >
+                      マップで場所を見る
+                    </button>
+                  ) : (
+                    <Link
+                      href={mapHref(shown)}
+                      onClick={onClose}
+                      className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS)}
+                    >
+                      マップで場所を見る
+                    </Link>
+                  )}
                 </div>
               )}
             </>
