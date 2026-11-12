@@ -22,13 +22,26 @@ type ExhibitionSheetProps = {
   selectedRoom: string | null;
   /** 出展をタップしたとき */
   onSelectExhibition: (exhibition: Exhibition) => void;
+  /** この値が変わるたびに、シートを一番下（見出しだけ）まで下げる */
+  collapseRequest: number;
 };
 
 /** 表示中の階の出展一覧。マップの下からのぞかせ、引き上げると一覧が広がる */
-export default function ExhibitionSheet({ floor, selectedRoom, onSelectExhibition }: ExhibitionSheetProps) {
+export default function ExhibitionSheet({
+  floor,
+  selectedRoom,
+  onSelectExhibition,
+  collapseRequest,
+}: ExhibitionSheetProps) {
   const exhibitions = getExhibitionsOnFloor(floor);
   // どの階で開いた高さかも覚えておき、階を切り替えたら閉じた状態に戻す
   const [opened, setOpened] = useState<{ floor: Floor; snap: SnapPoint } | null>(null);
+  // 下げる指示が来たら閉じた状態に戻す（React の「描画中に state を調整する」書き方）
+  const [prevCollapse, setPrevCollapse] = useState(collapseRequest);
+  if (collapseRequest !== prevCollapse) {
+    setPrevCollapse(collapseRequest);
+    setOpened(null);
+  }
   const snap = opened?.floor === floor ? opened.snap : SHEET_PEEK;
   // 最初の表示では、Base UI がシートの高さを測るまで一瞬「全部開いた位置」になる。
   // そこから閉じた位置へ動くアニメーションが見えないよう、表示が落ち着くまでアニメーションを切っておく
@@ -37,12 +50,6 @@ export default function ExhibitionSheet({ floor, selectedRoom, onSelectExhibitio
     const id = requestAnimationFrame(() => setReady(true));
     return () => cancelAnimationFrame(id);
   }, []);
-
-  function select(exhibition: Exhibition) {
-    onSelectExhibition(exhibition);
-    // モーダルを閉じたあと、選んだ教室がマップで見えるようシートを下げる
-    setOpened(null);
-  }
 
   return (
     // 常に開いたまま。マップも操作できるよう modal にせず、外側のタップでも閉じない
@@ -83,7 +90,7 @@ export default function ExhibitionSheet({ floor, selectedRoom, onSelectExhibitio
             const selected = selectedRoom !== null && locationsOf(ex).includes(selectedRoom);
             return (
               <li key={ex.id} className="border-b last:border-b-0">
-                <ExhibitionCard exhibition={ex} onSelect={select} selected={selected} />
+                <ExhibitionCard exhibition={ex} onSelect={onSelectExhibition} selected={selected} />
               </li>
             );
           })}
