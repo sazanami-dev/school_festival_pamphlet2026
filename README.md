@@ -10,7 +10,7 @@ compose.yaml         開発用: Next.js(dev, ホットリロード) + PostgreSQL
 compose.prod.yaml    本番用: migrate(1回実行) → Next.js(standalone) + PostgreSQL(非公開)
 drizzle.config.ts    drizzle-kit 設定
 drizzle/             生成されたマイグレーションSQL（コミットする）
-src/db/schema.ts     テーブル定義（まだ空）
+src/db/schema.ts     テーブル定義（スタンプラリー）
 src/db/index.ts      DBクライアント（getDb()）
 src/app/api/health   ヘルスチェック（DB疎通まで確認）
 ```
@@ -70,3 +70,21 @@ export async function getItems() {
 ```
 
 取得結果をキャッシュしたい場合は、`connection()` の後に `"use cache"` + `cacheLife()` を付けた関数を呼びます。
+
+## スタンプラリー
+
+設計は [docs/stamp-rally-design.md](docs/stamp-rally-design.md)。
+
+```
+src/data/checkpoints.json   チェックポイント（公開してよい情報だけ。今は仮のデータ）
+src/data/rally.json         必要数・景品名・交換所
+src/lib/rally/              サーバー側の処理（service.ts が中身。Server Action と /s/[token] から呼ぶ）
+src/app/stamp/              参加者の画面と Server Action
+src/app/s/[token]/route.ts  チェックポイントQRのリンク先（Route Handler）
+src/app/staff/              交換所スタッフの画面（PINでログイン）
+scripts/build-checkpoint-posters.ts  掲示物（QR入りHTML）を print/ に作る
+```
+
+- 環境変数は `.env.example` の「スタンプラリー」を参照。開発中は未設定でも仮の値で動く（スタッフPINは `0000`、開催日は毎日 10:00〜16:00）。時間外に試すときは `.env` に `RALLY_DATES=*`・`RALLY_OPEN=00:00`・`RALLY_CLOSE=23:59` を入れる
+- 掲示物: `node --env-file=.env.production --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/build-checkpoint-posters.ts` → `print/checkpoints.html` をブラウザで開いて「PDFに保存」。`print/` はトークンが入るのでコミットしない（`.gitignore` 済み）
+- 本番のプロキシは `Host`（または `X-Forwarded-Host`）を変えずに渡し、`X-Forwarded-For` を付けること（Server Action と回数制限のため）
