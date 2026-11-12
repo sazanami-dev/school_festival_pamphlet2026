@@ -56,6 +56,11 @@ function FloorTabs() {
   // 一覧から出展を選んだときは listedRoom を残し、詳細を閉じると一覧に戻る
   const [listedRoom, setListedRoom] = useState<{ name: string; info: RoomInfo } | null>(null);
   const [detail, setDetail] = useState<Exhibition | null>(null);
+  // 詳細を出展一覧（ボトムシート）から開いたか。そのときだけ「マップで場所を見る」を出す
+  // （マップの教室をタップして開いたときは、すでにその教室が見えているので出さない）
+  const [detailFromSheet, setDetailFromSheet] = useState(false);
+  // 増えるたびにボトムシートを一番下まで下げる（「マップで場所を見る」でマップを見せるため）
+  const [sheetCollapse, setSheetCollapse] = useState(0);
   // 案内を開いている設備（マックスマートなど）
   const [facility, setFacility] = useState<Facility | null>(null);
 
@@ -123,18 +128,31 @@ function FloorTabs() {
     const info = room ? getRoomsOnFloor(floor).get(room) : undefined;
     if (!room || !info) return;
     if (info.exhibitions.length === 1 && info.events.length === 0) {
-      setDetail(info.exhibitions[0]);
+      openDetailFromMap(info.exhibitions[0]);
     } else {
       setListedRoom({ name: info.exhibitions[0]?.locationName ?? room, info });
     }
   }
 
-  /** 出展一覧の項目をタップしたとき。教室を中央に表示して、詳細を開く */
+  /** 出展一覧の項目をタップしたとき。シートとマップはそのままで、詳細だけを開く */
   function tapExhibition(exhibition: Exhibition) {
-    const [room] = locationsOf(exhibition);
-    if (room) selectRoom(room, { center: true });
     setListedRoom(null);
     setDetail(exhibition);
+    setDetailFromSheet(true);
+  }
+
+  /** シートから開いた詳細で「マップで場所を見る」を押したとき。詳細を閉じ、シートを下げて教室を中央に表示する */
+  function showOnMap(exhibition: Exhibition) {
+    const [room] = locationsOf(exhibition);
+    if (room) selectRoom(room, { center: true });
+    setDetail(null);
+    setSheetCollapse((n) => n + 1);
+  }
+
+  /** マップの教室から詳細を開く（「マップで場所を見る」は出さない） */
+  function openDetailFromMap(exhibition: Exhibition) {
+    setDetail(exhibition);
+    setDetailFromSheet(false);
   }
 
   // 指を下に動かすと上の階へ、上に動かすと下の階へ。一番上・一番下の階では何もしない
@@ -216,13 +234,23 @@ function FloorTabs() {
           ))}
         </div>
       </div>
-      <ExhibitionSheet floor={floor} selectedRoom={selectedRoom} onSelectExhibition={tapExhibition} />
+      <ExhibitionSheet
+        floor={floor}
+        selectedRoom={selectedRoom}
+        onSelectExhibition={tapExhibition}
+        collapseRequest={sheetCollapse}
+      />
       <RoomDetailModal
         room={detail ? null : listedRoom}
         onClose={() => setListedRoom(null)}
-        onSelectExhibition={setDetail}
+        onSelectExhibition={openDetailFromMap}
       />
-      <ExhibitionDetailModal exhibition={detail} onClose={() => setDetail(null)} showMapLink={false} />
+      <ExhibitionDetailModal
+        exhibition={detail}
+        onClose={() => setDetail(null)}
+        showMapLink={detailFromSheet}
+        onShowOnMap={showOnMap}
+      />
       <FacilityDetailModal facility={facility} onClose={() => setFacility(null)} />
     </Tabs>
   );
