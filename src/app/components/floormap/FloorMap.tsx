@@ -161,9 +161,9 @@ type FloorMapProps = {
 
 /**
  * マップを見やすくするため、まわりのボタンやシートをどこまで隠すか
- *   all    : マップ以外をすべて隠す（指でマップを動かしている間と、ピンチ・ダブルタップで拡大している間）
- *   others : ＋／−ボタンだけ残す（＋／−ボタンを押している間と、＋／−ボタンや「マップで場所を見る」で拡大している間）
- *   null   : 何も隠さない（等倍で、指も触れていない。マップをタップしただけのときも隠さない）
+ *   all    : マップ以外をすべて隠す（指でマップを動かしている間と、ピンチで拡大している間）
+ *   others : ＋／−ボタンだけ残す（＋／−ボタンを押している間）
+ *   null   : 何も隠さない（指が触れていない。拡大したままでも、指を離したら元に戻す。マップをタップしただけのときも隠さない）
  */
 export type HiddenUi = "all" | "others" | null;
 
@@ -185,20 +185,14 @@ function FloorSvg({
   const tapStart = useRef<{ pointerId: number; x: number; y: number } | null>(null);
   // 指（マウス）が今触れている場所。マップは実際に動いたら movedMap にする（タップだけでは隠さない）
   const pressed = useRef<"map" | "movedMap" | "buttons" | null>(null);
-  // 最後に拡大を始めたのが指（ピンチ・ダブルタップ・ホイール）か＋／−ボタンか
-  const zoomSource = useRef<"gesture" | "buttons">("buttons");
-  // 等倍より大きいか
-  const zoomed = useRef(false);
   const reportedHidden = useRef<HiddenUi>(null);
   // 最後に見たマップの位置と拡大率。実際に動いたかを比べる
   const lastTransform = useRef({ scale: MIN_SCALE, positionX: 0, positionY: 0 });
 
-  /** 触れている場所と拡大のしかたから、どこまで隠すかを決めて、変わったときだけ親に知らせる */
+  /** 触れている場所から、どこまで隠すかを決めて、変わったときだけ親に知らせる */
   function updateHidden() {
     const touch = pressed.current;
-    let next: HiddenUi = null;
-    if (touch === "movedMap" || (zoomed.current && zoomSource.current === "gesture")) next = "all";
-    else if (touch === "buttons" || zoomed.current) next = "others";
+    const next: HiddenUi = touch === "movedMap" ? "all" : touch === "buttons" ? "others" : null;
     if (next === reportedHidden.current) return;
     reportedHidden.current = next;
     onHiddenChange(next);
@@ -206,12 +200,11 @@ function FloorSvg({
 
   function press(target: "map" | "buttons") {
     pressed.current = target;
-    if (target === "buttons") zoomSource.current = "buttons";
     // ＋／−ボタンは押した時点で隠す。マップはタップかもしれないので、動き出すまで待つ
     updateHidden();
   }
 
-  // 指を離したら、触れている間だけの分を元に戻す（拡大している間は隠したまま）
+  // 指を離したら元に戻す（拡大したままでも戻す）
   // マップの外で離すこともあるので window で見る。
   // タッチは途中で pointercancel が来ることがあるので、残っている指の数（touches）で判断する
   const release = useEffectEvent(() => {
@@ -237,17 +230,11 @@ function FloorSvg({
 
   /** ピンチが始まったら（2本目の指が触れたら）、まだ動いていなくてもすべて隠す */
   function handlePinchStart() {
-    zoomSource.current = "gesture";
     pressed.current = "movedMap";
     updateHidden();
   }
 
-  /** 拡大縮小が始まったとき。ボタンや zoomToElement はライブラリが作った偽のイベント（isTrusted が false）で呼ぶ */
-  function handleZoomStart(_ref: ReactZoomPanPinchRef, event: Event) {
-    zoomSource.current = event.isTrusted ? "gesture" : "buttons";
-  }
-
-  /** 位置か拡大率が変わるたびに呼ばれる。マップに触れたまま実際に動いたときと、拡大しているときは隠す */
+  /** 位置か拡大率が変わるたびに呼ばれる。マップに触れたまま実際に動いたときは隠す */
   function handleTransform(_ref: ReactZoomPanPinchRef, state: { scale: number; positionX: number; positionY: number }) {
     const last = lastTransform.current;
     const moved =
@@ -256,9 +243,6 @@ function FloorSvg({
       Math.abs(state.positionY - last.positionY) > 0.5;
     lastTransform.current = { scale: state.scale, positionX: state.positionX, positionY: state.positionY };
     if (moved && pressed.current === "map") pressed.current = "movedMap";
-    zoomed.current = state.scale > MIN_SCALE + 0.01;
-    // 等倍に戻ったら、次の拡大（「マップで場所を見る」など）はボタン扱いから始める
-    if (!zoomed.current) zoomSource.current = "buttons";
     updateHidden();
   }
 
@@ -293,8 +277,6 @@ function FloorSvg({
     // 表示した直後は枠の大きさが決まっていないことがあるので、次の描画まで待つ
     // （型は HTML 要素しか受け付けないが、ID で渡せば SVG の <g id="T22"> も対象にできる。無い ID なら何もしない）
     const id = requestAnimationFrame(() => {
-      // 指で拡大したあとでも、この移動はボタンでの拡大として扱う（＋／−ボタンを残す）
-      zoomSource.current = "buttons";
       transformRef.current?.zoomToElement(focusRoom.room, { maxScale: FOCUS_MAX_SCALE });
     });
     return () => cancelAnimationFrame(id);
@@ -339,7 +321,6 @@ function FloorSvg({
       maxScale={MAX_SCALE}
       doubleClick={{ step: ZOOM_STEP }}
       onPinchStart={handlePinchStart}
-      onZoomStart={handleZoomStart}
       onTransform={handleTransform}
     >
       {/* マップの枠は画面の端とボトムシートの裏まで広げ、階ボタンと拡大縮小ボタンはマップに重ねる。

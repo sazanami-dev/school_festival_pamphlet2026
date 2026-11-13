@@ -55,7 +55,7 @@ function FloorTabs() {
   const [detailFromSheet, setDetailFromSheet] = useState(false);
   // 増えるたびにボトムシートを一番下まで下げる（「マップで場所を見る」でマップを見せるため）
   const [sheetCollapse, setSheetCollapse] = useState(0);
-  // マップを操作・拡大している間は、マップを見やすくするため階ボタンとボトムシートを隠す
+  // マップを指で動かしている・拡大している間は、マップを見やすくするため階ボタンとボトムシートを隠す（指を離したら戻す）
   const [hiddenUi, setHiddenUi] = useState<HiddenUi>(null);
   // 案内を開いている設備（マックスマートなど）
   const [facility, setFacility] = useState<Facility | null>(null);
@@ -85,7 +85,7 @@ function FloorTabs() {
     setListedRoom(null);
     setDetail(null);
     setFacility(null);
-    // 新しい階のマップは等倍で表示されるので、隠していたものを戻す
+    // 階を切り替えたら、隠していたものを戻す
     setHiddenUi(null);
   }
 
@@ -190,7 +190,7 @@ function FloorTabs() {
           {/* 画面が低い（Android やイベントのお知らせが出ているとき）と8個のボタンが入りきらないので、
               枠の高さはマップの枠まで（max-h-full）にし、まずボタンを低くして収める。それでも入らなければ枠の中をスクロールする
               （中央寄せのままだと上のボタンにスクロールで届かなくなるので上詰め。収まるときは枠ごと中央に置かれる） */}
-          {/* マップを操作・拡大している間は隠す */}
+          {/* マップを指で動かしている・拡大している間は隠す */}
           <TabsList
             ref={floorListRef}
             inert={hiddenUi !== null}
