@@ -36,20 +36,20 @@ export async function recoverAction(_prev: FormState, formData: FormData): Promi
 }
 
 export type ScanResult =
-  | { status: "new" | "already"; checkpointName: string }
   | { status: "invalid" }
   | { status: "closed"; hours: string }
   | { status: "not_joined" };
 
-/** パンフ内スキャナ・手入力から呼ぶ */
+/**
+ * パンフ内スキャナ・手入力から呼ぶ
+ * 読めたときはスタンプ トップへ移ってスタンプを押すアニメーションを見せる。失敗したときはその場で読み直せるよう結果を返す
+ */
 export async function collectStampAction(token: string): Promise<ScanResult> {
   const participant = await getCurrentParticipant();
   if (!participant) return { status: "not_joined" };
 
   const result = await collectStamp(participant.id, token);
-  if (result.status === "new" || result.status === "already") {
-    return { status: result.status, checkpointName: result.checkpoint.name };
-  }
+  if (result.status === "new" || result.status === "already") redirect(collectResultUrl(result));
   if (result.status === "closed") return { status: "closed", hours: formatRallyHours() };
   return { status: "invalid" };
 }

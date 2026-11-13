@@ -41,7 +41,6 @@ export default function ScanView() {
         return;
       }
       setResult(next);
-      if (next.status === "new" || next.status === "already") setManual("");
     });
   }
 
@@ -91,27 +90,9 @@ export default function ScanView() {
   );
 }
 
+/** 読めなかったときの結果（読めたときはスタンプ トップへ移るのでここには来ない） */
 function ResultView({ result, onContinue }: { result: Shown; onContinue: () => void }) {
   switch (result.status) {
-    case "new":
-    case "already":
-      return (
-        <div className="space-y-3">
-          {result.status === "new" ? (
-            <Notice tone="success" title={`${result.checkpointName} のスタンプを獲得！`} />
-          ) : (
-            <Notice tone="info" title="獲得済みです">{result.checkpointName} のスタンプはもう持っています。</Notice>
-          )}
-          <div className="grid grid-cols-2 gap-2">
-            <Button size="lg" variant="outline" onClick={onContinue} className="h-12 text-base">
-              続けて読む
-            </Button>
-            <Link href="/stamp" className={buttonVariants({ size: "lg", className: "h-12 text-base" })}>
-              一覧を見る
-            </Link>
-          </div>
-        </div>
-      );
     case "closed":
       return (
         <Notice tone="error" title={`受付時間外です（${result.hours}）`}>
