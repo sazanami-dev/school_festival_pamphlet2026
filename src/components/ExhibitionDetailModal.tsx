@@ -220,13 +220,14 @@ export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink
                 )}
               </div>
 
-              {showMapLink && (
-                <div className="border-t px-4 py-3">
-                  {onShowOnMap ? (
+              {/* タイムテーブルのモーダルと同じく、「マップで場所を見る」と「閉じる」を横に並べる */}
+              <div className="flex gap-3 border-t px-4 py-3">
+                {showMapLink &&
+                  (onShowOnMap ? (
                     <button
                       type="button"
                       onClick={() => onShowOnMap(shown)}
-                      className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS)}
+                      className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS, "flex-1")}
                     >
                       マップで場所を見る
                     </button>
@@ -234,13 +235,17 @@ export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink
                     <Link
                       href={mapHref(shown)}
                       onClick={onClose}
-                      className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS)}
+                      className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS, "flex-1")}
                     >
                       マップで場所を見る
                     </Link>
-                  )}
-                </div>
-              )}
+                  ))}
+                <Dialog.Close
+                  className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-11 flex-1 text-base font-semibold")}
+                >
+                  閉じる
+                </Dialog.Close>
+              </div>
             </>
           )}
         </Dialog.Popup>
