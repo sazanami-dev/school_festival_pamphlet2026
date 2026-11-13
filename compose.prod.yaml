@@ -11,6 +11,14 @@ services:
       - "${APP_PORT:-3000}:3000"
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      # スタンプラリー（値は .env.production から渡す）
+      RALLY_SECRET: ${RALLY_SECRET:-}
+      CHECKPOINT_SECRET: ${CHECKPOINT_SECRET:-}
+      STAFF_PIN: ${STAFF_PIN:-}
+      RALLY_DATES: ${RALLY_DATES:-}
+      RALLY_OPEN: ${RALLY_OPEN:-}
+      RALLY_CLOSE: ${RALLY_CLOSE:-}
+      RALLY_EXCHANGE_CLOSE: ${RALLY_EXCHANGE_CLOSE:-}
     depends_on:
       migrate:
         condition: service_completed_successfully

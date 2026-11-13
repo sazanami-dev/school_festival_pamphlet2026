@@ -10,3 +10,5 @@ compose*.yaml
 .dockerignore
 README.md
 .DS_Store
+# スタンプラリーの掲示物（トークンが入る）
+print

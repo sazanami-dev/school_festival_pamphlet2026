@@ -21,6 +21,8 @@
 /build
 
 # misc
+# スタンプラリーの掲示物（トークンが入るのでコミットしない）
+/print/
 .DS_Store
 *.pem
 
