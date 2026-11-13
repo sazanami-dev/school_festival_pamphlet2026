@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { LuStamp } from "react-icons/lu";
-import { MdInfoOutline, MdOutlineKey, MdQrCodeScanner } from "react-icons/md";
-import { buttonVariants } from "@/components/ui/button";
+import { MdInfoOutline, MdOutlineKey, MdOutlineRedeem, MdQrCodeScanner } from "react-icons/md";
 import { formatCode } from "@/lib/rally/code";
 import {
   checkpointMapHref,
@@ -279,7 +278,7 @@ function JoinedView({
             <MdQrCodeScanner aria-hidden className="size-6 text-[#E3E3E3]" />
             コードをスキャン
           </Link>
-          <PrizeCard count={count} redeemedAt={progress.redeemedAt} />
+          <ExchangeButton count={count} redeemed={progress.redeemedAt !== null} />
         </div>
       </TopArea>
       <BottomArea>
@@ -289,31 +288,30 @@ function JoinedView({
   );
 }
 
-function PrizeCard({ count, redeemedAt }: { count: number; redeemedAt: Date | null }) {
-  const place = `${rallyConfig.exchangePlace.name}（${formatFloorPlace(rallyConfig.exchangePlace)}）`;
+/** 景品交換へ進むボタン。いつも出しておき、必要な数に届くまでと交換したあとは押せないようにする */
+function ExchangeButton({ count, redeemed }: { count: number; redeemed: boolean }) {
+  const className = "flex h-12.5 w-full items-center justify-center gap-2.5 rounded-[10px] font-bold";
+  const body = (
+    <>
+      <MdOutlineRedeem aria-hidden className="size-6" />
+      {redeemed ? "クーポンに交換済みです" : "スタンプをクーポンに交換する"}
+    </>
+  );
 
-  if (redeemedAt) {
+  if (redeemed || count < rallyConfig.requiredStamps) {
     return (
-      <Notice tone="success" title="景品交換済みです">
-        ご参加ありがとうございました！
-      </Notice>
-    );
-  }
-  if (count < rallyConfig.requiredStamps) {
-    return (
-      <p className="text-center text-sm text-muted-foreground">
-        あと <strong className="text-foreground">{rallyConfig.requiredStamps - count}個</strong> で景品と交換できます
-      </p>
+      <span role="link" aria-disabled="true" className={cn(className, "bg-[#E3E3E3] text-[#A0A0A0]")}>
+        {body}
+      </span>
     );
   }
   return (
-    <section className="space-y-3 rounded-xl border-2 border-amber-400 bg-amber-50 p-4 text-amber-950">
-      <p className="text-lg font-bold">景品と交換できます！</p>
-      <p className="text-sm">交換所：{place}</p>
-      <Link href="/stamp/exchange" className={buttonVariants({ size: "lg", className: "h-12 w-full text-base" })}>
-        景品交換へ
-      </Link>
-    </section>
+    <Link
+      href="/stamp/exchange"
+      className={cn(className, "border-2 border-[#0048FF] bg-white text-[#0048FF] transition active:opacity-80")}
+    >
+      {body}
+    </Link>
   );
 }
 
