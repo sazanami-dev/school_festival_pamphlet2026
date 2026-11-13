@@ -25,7 +25,7 @@ export type RoomInfo = {
   events: FestivalEvent[];
 };
 
-/** facility.json の1件分（出展ではないが、タップすると案内を出す設備。マックスマートなど） */
+/** facility.json の1件分（出展ではないが、タップすると案内を出す設備。マックスマートや休憩室など） */
 export type Facility = {
   id: string;
   name: string;
@@ -34,7 +34,9 @@ export type Facility = {
   location: string;
   /** 説明文。空なら表示しない */
   description: string;
-  /** 使える支払い方法 */
+  /** 良いお知らせとして緑で表示する案内（例: 休憩室の「飲食できます」） */
+  highlights: string[];
+  /** 使える支払い方法。空なら表示しない */
   payments: string[];
   /** 目立たせて表示する注意書き（例: 「現金は使えません」） */
   notes: string[];
