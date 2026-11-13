@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { FaGithub, FaInstagram } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { MdExpandMore, MdLanguage } from "react-icons/md";
+import PageTitle from "@/components/PageTitle";
 
 export const metadata: Metadata = {
   title: "情報 | トライデント学園祭2026 デジタルパンフレット",
@@ -17,8 +18,8 @@ const CIRCLE_LINKS = [
 
 export default function InfoPage() {
   return (
-    <div className="mx-auto w-full max-w-md space-y-5 px-4 pt-4 pb-(--bottom-nav-space)">
-      <h1 className="text-xl font-bold">情報</h1>
+    <div className="mx-auto w-full max-w-md space-y-5 px-4 pb-(--bottom-nav-space)">
+      <PageTitle className="-mx-4">情報</PageTitle>
       <AboutFestival />
       <AboutCircle />
     </div>
@@ -33,8 +34,8 @@ function AboutFestival() {
         新校舎初の学園祭！！！
       </h2>
       <div className="rounded-lg bg-blue-50 px-4 py-3 dark:bg-blue-950">
-        <span className="inline-block rounded-md bg-blue-600 px-2 py-0.5 text-xs font-bold text-white">テーマ</span>
-        <p className="mt-1.5 text-xl font-bold text-blue-600 dark:text-blue-400">Hello New Trident!</p>
+        <span className="inline-block rounded-md bg-[#0048FF] px-2 py-0.5 text-xs font-bold text-white">テーマ</span>
+        <p className="mt-1.5 text-xl font-bold text-[#0048FF] dark:text-blue-400">Hello New Trident!</p>
       </div>
       <p>
         今回始まるのは、トライデント新校舎というプログラム。プログラミングではじめに学ぶ &quot;Hello World!&quot;
@@ -79,7 +80,7 @@ function AboutCircle() {
       </ul>
       {/* タップで下に開く（details なのでクライアントの JS は不要） */}
       <details className="group">
-        <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg bg-[#0033CC] px-4 py-3 text-sm font-bold text-white [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg bg-[#0048FF] px-4 py-3 text-sm font-bold text-white [&::-webkit-details-marker]:hidden">
           さざなみ開発について詳しく見る
           <MdExpandMore aria-hidden className="size-5 transition-transform group-open:rotate-180" />
         </summary>
@@ -137,7 +138,7 @@ function CircleDetail() {
       <ul className="space-y-3">
         {ACTIVITIES.map(({ title, body }) => (
           <li key={title} className="space-y-2 rounded-lg bg-muted p-4">
-            <h4 className="inline-block rounded-md bg-[#0033CC] px-2 py-0.5 text-sm font-bold text-white">{title}</h4>
+            <h4 className="inline-block rounded-md bg-[#0048FF] px-2 py-0.5 text-sm font-bold text-white">{title}</h4>
             {body.map((line) => (
               <p key={line} className="text-sm leading-relaxed">
                 {line}

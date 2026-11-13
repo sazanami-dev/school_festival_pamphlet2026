@@ -5,7 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ExhibitionCard from "@/components/ExhibitionCard";
+import PageTitle from "@/components/PageTitle";
 import { floorButtonClass } from "@/components/floorButton";
+import { genreChipClass } from "@/components/genreChip";
 import ExhibitionDetailModal, {
   formatPlace,
   getGenreColor,
@@ -108,9 +110,6 @@ const allGenres = sortGenres([...new Set(exhibitions.flatMap((e) => e.genre))]);
  * 部品
  * ======================================================= */
 
-const chipClass =
-  "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors aria-pressed:border-blue-500 aria-pressed:bg-blue-500 aria-pressed:text-white";
-
 /** ジャンル絞り込みチップ（横スクロール・複数選択可） */
 function GenreChips({
   selected,
@@ -127,7 +126,7 @@ function GenreChips({
       aria-label="ジャンルで絞り込み"
       className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <button type="button" aria-pressed={selected.length === 0} onClick={onClear} className={chipClass}>
+      <button type="button" aria-pressed={selected.length === 0} onClick={onClear} className={genreChipClass}>
         すべて
       </button>
       {allGenres.map((genre) => (
@@ -136,7 +135,7 @@ function GenreChips({
           type="button"
           aria-pressed={selected.includes(genre)}
           onClick={() => onToggle(genre)}
-          className={chipClass}
+          className={genreChipClass}
         >
           <span aria-hidden className={cn("size-2 rounded-full", getGenreColor(genre).dot)} />
           {genre}
@@ -344,8 +343,8 @@ function ExhibitionsView() {
 
   return (
     <div className="mx-auto w-full max-w-md pb-(--bottom-nav-space)">
-      <div className="space-y-3 px-4 pt-3 pb-3">
-        <h1 className="text-center text-2xl font-bold">出展一覧</h1>
+      <div className="space-y-3 px-4 pb-3">
+        <PageTitle className="-mx-4">出展一覧</PageTitle>
         <input
           type="search"
           value={inputValue}
@@ -405,8 +404,8 @@ function ExhibitionsView() {
 /** 読み込み中に表示する枠 */
 function ExhibitionsFallback() {
   return (
-    <div className="mx-auto w-full max-w-md px-4 pt-3">
-      <h1 className="text-center text-2xl font-bold">出展一覧</h1>
+    <div className="mx-auto w-full max-w-md px-4">
+      <PageTitle className="-mx-4">出展一覧</PageTitle>
       <p className="py-16 text-center text-sm text-muted-foreground">読み込み中…</p>
     </div>
   );

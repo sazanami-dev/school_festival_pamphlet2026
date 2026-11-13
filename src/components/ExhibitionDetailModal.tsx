@@ -104,7 +104,7 @@ export function formatPlace(item: { floor: string; location: string; locationNam
 
 /** モーダルの一番下のボタン（「マップで場所を見る」など）。タイムテーブルの「マップで場所を見る」と同じ青・太さにする */
 export const MODAL_ACTION_CLASS =
-  "h-11 w-full bg-blue-600 text-base font-semibold text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700";
+  "h-11 w-full bg-[#0048FF] text-base font-semibold text-white hover:bg-[#0048FF]/90";
 
 /** ジャンルの数だけ色付きバッジを並べる */
 export function GenreBadges({ genres, className }: { genres: string[]; className?: string }) {
@@ -220,13 +220,14 @@ export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink
                 )}
               </div>
 
-              {showMapLink && (
-                <div className="border-t px-4 py-3">
-                  {onShowOnMap ? (
+              {/* タイムテーブルのモーダルと同じく、「マップで場所を見る」と「閉じる」を横に並べる */}
+              <div className="flex gap-3 border-t px-4 py-3">
+                {showMapLink &&
+                  (onShowOnMap ? (
                     <button
                       type="button"
                       onClick={() => onShowOnMap(shown)}
-                      className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS)}
+                      className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS, "flex-1")}
                     >
                       マップで場所を見る
                     </button>
@@ -234,13 +235,17 @@ export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink
                     <Link
                       href={mapHref(shown)}
                       onClick={onClose}
-                      className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS)}
+                      className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS, "flex-1")}
                     >
                       マップで場所を見る
                     </Link>
-                  )}
-                </div>
-              )}
+                  ))}
+                <Dialog.Close
+                  className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-11 flex-1 text-base font-semibold")}
+                >
+                  閉じる
+                </Dialog.Close>
+              </div>
             </>
           )}
         </Dialog.Popup>

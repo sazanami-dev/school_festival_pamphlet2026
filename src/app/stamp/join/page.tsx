@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import PageTitle from "@/components/PageTitle";
 import { findCheckpointByToken } from "@/lib/rally/checkpoint-token";
 import { getCurrentParticipant } from "@/lib/rally/service";
 import { joinWithStampAction, recoverWithStampAction } from "../actions";
@@ -13,8 +14,8 @@ import SubmitButton from "../components/SubmitButton";
  */
 export default function JoinPage({ searchParams }: PageProps<"/stamp/join">) {
   return (
-    <div className="mx-auto w-full max-w-md space-y-4 px-4 pt-4 pb-(--bottom-nav-space)">
-      <h1 className="text-xl font-bold">スタンプラリー</h1>
+    <div className="mx-auto w-full max-w-md space-y-4 px-4 pb-(--bottom-nav-space)">
+      <PageTitle className="-mx-4">スタンプラリー</PageTitle>
       <Suspense fallback={<p className="py-16 text-center text-sm text-muted-foreground">読み込み中…</p>}>
         <JoinChoice searchParams={searchParams} />
       </Suspense>

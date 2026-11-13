@@ -58,7 +58,7 @@ export default function BottomNav() {
           <Link
             href={STAMP_ITEM.href}
             aria-current={stampActive ? "page" : undefined}
-            className="flex size-22 flex-col items-center justify-center gap-0.5 rounded-full bg-blue-700 text-white shadow-md transition active:scale-95"
+            className="flex size-22 flex-col items-center justify-center gap-0.5 rounded-full bg-[#0048FF] text-white shadow-md transition active:scale-95"
           >
             <STAMP_ITEM.icon aria-hidden className="size-9" />
             <span className="text-xs font-bold">{STAMP_ITEM.label}</span>
@@ -80,7 +80,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 transition active:scale-95",
-        active ? "text-blue-700 dark:text-blue-400" : "text-gray-400",
+        active ? "text-[#0048FF] dark:text-blue-400" : "text-gray-400",
       )}
     >
       <item.icon aria-hidden className="size-7" />

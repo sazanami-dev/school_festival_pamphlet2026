@@ -4,8 +4,11 @@
 import { useRef, useState, useEffect } from "react";
 import eventsData from "../../data/event.json";
 import { useRouter } from "next/navigation";
-import { getGenreColor } from "@/components/ExhibitionDetailModal";
+import { getGenreColor, sortGenres } from "@/components/ExhibitionDetailModal";
+import { genreChipClass } from "@/components/genreChip";
+import { MdPlace } from "react-icons/md";
 import { cn } from "@/lib/utils";
+import PageTitle from "@/components/PageTitle";
 
 interface Event {
   id: string;
@@ -77,9 +80,9 @@ export default function Timetable() {
   const targetRef = useRef<HTMLHeadingElement | null>(null);
 
   // イベントに登録されているジャンル一覧
-  const genres = Array.from(
+  const genres = sortGenres(Array.from(
     new Set(data.flatMap((event) => event.genre))
-  );
+  ));
 
   // 現在時刻の見出しへの参照
 
@@ -112,7 +115,8 @@ export default function Timetable() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 pb-(--bottom-nav-space)">
+    <div className="w-full max-w-4xl mx-auto px-6 pb-(--bottom-nav-space)">
+      <PageTitle className="-mx-6 mb-4">タイムテーブル</PageTitle>
       {isDevelopment && !isEventDay && (
         <button
           onClick={() => setDebugMode(!debugMode)}
@@ -123,29 +127,29 @@ export default function Timetable() {
             : "デバッグ：時間機能を確認"}
         </button>
       )}
-      {/* ジャンル絞り込み */}
-      <h2 className="font-bold mb-4">ジャンル絞り込み</h2>
-
-      <button
-        onClick={() => setSelectedGenre(null)}
-        className={`rounded-full px-4 py-2 mb-2 hover:scale-105 transform ${selectedGenre === null
-          ? "bg-blue-600 text-white"
-          : "bg-gray-200 text-gray-800"
-          }`}
+      {/* ジャンル絞り込み（横スクロール） */}
+      <div
+        role="group"
+        aria-label="ジャンルで絞り込み"
+        className="-mx-6 mb-4 flex gap-2 overflow-x-auto px-6 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        すべて
-      </button>
-
-      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          aria-pressed={selectedGenre === null}
+          onClick={() => setSelectedGenre(null)}
+          className={genreChipClass}
+        >
+          すべて
+        </button>
         {genres.map((genre) => (
           <button
             key={genre}
+            type="button"
+            aria-pressed={selectedGenre === genre}
             onClick={() => setSelectedGenre(genre)}
-            className={`rounded-full px-4 py-2 mb-2 hover:scale-105 transform ${selectedGenre === genre
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-800"
-              }`}
+            className={genreChipClass}
           >
+            <span aria-hidden className={cn("size-2 rounded-full", getGenreColor(genre).dot)} />
             {genre}
           </button>
         ))}
@@ -177,7 +181,7 @@ export default function Timetable() {
             <h2
               ref={hour === currentHour ? targetRef : null}
 
-              className="sticky top-0 z-10 bg-white py-2 mb-3 px-4 text-xl font-boldborder-solid border-l-1 border-b-2"
+              className="sticky top-2 z-10 rounded-full text-center bg-gray-200 py-1 mb-3 px-5 text-xl font-bold text-gray-700"
             >
               {hour}:00
             </h2>
@@ -225,7 +229,7 @@ export default function Timetable() {
                             ? "border-gray-200 bg-white"
                             //ジャンル絞りこみ
                             : event.genre.includes(selectedGenre)
-                              ? "border-blue-500 bg-blue-100 ring-2 ring-blue-300 shadow-md"
+                              ? "border-[#0048FF] bg-blue-100 ring-2 ring-[#0048FF]/30 shadow-md"
                               : "border-gray-200 bg-gray-200 opacity-50"
                       }`}
                   >
@@ -258,7 +262,8 @@ export default function Timetable() {
                       {event.startTime} ～ {event.endTime}
                     </p>
                     {/*場所*/}
-                    <p className="mt-1 text-sm text-gray-600">
+                    <p className="mt-1 flex items-center gap-1 font-semibold text-gray-800">
+                      <MdPlace className="shrink-0 text-[#0048FF]" aria-hidden />
                       {event.floor}階 {event.location}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -283,7 +288,7 @@ export default function Timetable() {
       {showTimeFeatures && (
         <button
           onClick={scrollToElement}
-          className="fixed bottom-[calc(var(--bottom-nav-space)+0.5rem)] right-6 z-40 rounded-full bg-blue-600 px-6 py-3 font-bold text-white shadow-lg transition hover:bg-blue-700 active:scale-95"
+          className="fixed bottom-[calc(var(--bottom-nav-space)+0.5rem)] right-6 z-40 rounded-full bg-[#0048FF] px-6 py-3 font-bold text-white shadow-lg transition hover:bg-[#0048FF]/90 active:scale-95"
         >
           今の時間へ
         </button>
@@ -293,7 +298,7 @@ export default function Timetable() {
       {/* イベント詳細モーダル */}
       {selectedEvent && (
         <div
-          className="fixed inset-0 z-50 flex -center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           onClick={() => setSelectedEvent(null)}
         >
           <div
@@ -329,7 +334,8 @@ export default function Timetable() {
               <p className="mb-1 font-semibold text-gray-700">
                 開催場所
               </p>
-              <p className="text-gray-600">
+              <p className="flex items-center gap-1 font-semibold text-gray-800">
+                <MdPlace className="shrink-0 text-[#0048FF]" aria-hidden />
                 {selectedEvent.floor}階 {selectedEvent.location}
               </p>
             </div>
@@ -362,21 +368,22 @@ export default function Timetable() {
               </p>
             </div>
 
-            {/* マップで場所を見る */}
-            <button onClick={() => handleClick(selectedEvent!)}
-              className="w-auto rounded-lg bg-blue-600 p-3 mb-3 font-semibold text-white transition hover:bg-blue-700"
-            >
-              マップで場所を見る
-            </button>
+            <div className="flex gap-3">
+              {/* マップで場所を見る */}
+              <button onClick={() => handleClick(selectedEvent!)}
+                className="flex-1 rounded-lg bg-[#0048FF] py-3 font-semibold text-white transition hover:bg-[#0048FF]/90"
+              >
+                マップで場所を見る
+              </button>
 
-
-            {/* 閉じる */}
-            <button
-              onClick={() => setSelectedEvent(null)}
-              className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700"
-            >
-              閉じる
-            </button>
+              {/* 閉じる */}
+              <button
+                onClick={() => setSelectedEvent(null)}
+                className="flex-1 rounded-lg border border-gray-300 bg-white py-3 font-semibold text-gray-700 transition hover:bg-gray-100"
+              >
+                閉じる
+              </button>
+            </div>
 
           </div>
         </div>

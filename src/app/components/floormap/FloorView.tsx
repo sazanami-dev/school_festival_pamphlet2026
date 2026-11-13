@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { floorButtonClass } from "@/components/floorButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ExhibitionDetailModal from "@/components/ExhibitionDetailModal";
 import ExhibitionSheet, { SHEET_PEEK } from "./ExhibitionSheet";
@@ -35,11 +34,6 @@ function floorOfRoom(room: string | null) {
   return room?.match(/^[Tf](\d)/)?.[1] ?? null;
 }
 
-//階の見出し
-function FloorHeading({ floor }: { floor: Floor }) {
-  return <h2 className="py-3 text-center text-2xl font-bold">{floor}階</h2>;
-}
-
 function FloorTabs() {
   const searchParams = useSearchParams();
   // ?room=T22 は「開いたときに強調して中央に表示する教室」の指定（出展一覧ページの「マップで場所を見る」など）
@@ -61,7 +55,7 @@ function FloorTabs() {
   const [detailFromSheet, setDetailFromSheet] = useState(false);
   // 増えるたびにボトムシートを一番下まで下げる（「マップで場所を見る」でマップを見せるため）
   const [sheetCollapse, setSheetCollapse] = useState(0);
-  // マップを操作・拡大している間は、マップを見やすくするため階ボタンとボトムシートを隠す
+  // マップを指で動かしている・拡大している間は、マップを見やすくするため階ボタンとボトムシートを隠す（指を離したら戻す）
   const [hiddenUi, setHiddenUi] = useState<HiddenUi>(null);
   // 案内を開いている設備（マックスマートなど）
   const [facility, setFacility] = useState<Facility | null>(null);
@@ -91,7 +85,7 @@ function FloorTabs() {
     setListedRoom(null);
     setDetail(null);
     setFacility(null);
-    // 新しい階のマップは等倍で表示されるので、隠していたものを戻す
+    // 階を切り替えたら、隠していたものを戻す
     setHiddenUi(null);
   }
 
@@ -178,48 +172,55 @@ function FloorTabs() {
 
   return (
     // 縦向きのタブにすると上下の矢印キーで階を移動できる（向きの指定で横並びになるので flex-col で縦積みに戻す）
-    // 下から出ている出展一覧（ボトムシート）にマップが隠れないよう、その分の余白を空ける
     <Tabs
       value={floor}
       onValueChange={changeFloor}
       orientation="vertical"
       className="min-h-0 flex-1 flex-col gap-0"
-      style={{ paddingBottom: SHEET_PEEK }}
     >
-      <FloorHeading floor={floor} />
-      <div className="flex min-h-0 flex-1 gap-2 px-4 pb-3">
-        {/* 階切替ボタンはマップの左に縦に並べる。エレベーターのように上の階ほど上 */}
-        {/* 画面が低い（Android やイベントのお知らせが出ているとき）と8個のボタンが入りきらないので、
-            列の高さはマップの枠まで（max-h-full）にし、まずボタンを低くして収める。それでも入らなければ列をスクロールする
-            （中央寄せのままだと上のボタンにスクロールで届かなくなるので上詰め。収まるときは列ごと中央に置かれる） */}
-        {/* マップを操作・拡大している間は隠す（場所は空けたままにして、マップの大きさが変わらないようにする） */}
-        <TabsList
-          ref={floorListRef}
-          inert={hiddenUi !== null}
-          className={cn(
-            "max-h-full w-10 shrink-0 justify-start gap-1.5 self-center overflow-y-auto bg-transparent p-0 transition-opacity duration-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-            hiddenUi !== null && "opacity-0",
-          )}
+      {/* マップを拡大したときに広く見られるよう、マップの枠は画面の端と、下から出ている出展一覧（ボトムシート）の裏まで広げる
+          （等倍のときにボタンやシートに重ならないよう、余白は FloorMap の中で空ける） */}
+      <div className="relative flex min-h-0 flex-1">
+        {/* 階切替ボタンは、シートに隠れない範囲（シートより上）の縦の中央に置く */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center"
+          style={{ bottom: SHEET_PEEK }}
         >
-          {floorsTopDown.map((f) => (
-            <TabsTrigger
-              key={f}
-              value={f}
-              aria-label={`${f}階`}
-              className={cn(
-                floorButtonClass,
-                // tabs.tsx の縦向き用の指定（group-data-vertical/tabs:justify-start）は同じ条件付きクラスでないと上書きできない
-                "shadow-none group-data-vertical/tabs:justify-center",
-                // 普段は 40px の正方形。入りきらないときだけ縦に縮む（押しやすさを保てる 32px まで）
-                "h-auto min-h-8 flex-[0_1_2.5rem]",
-              )}
-            >
-              {f}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+          {/* 階切替ボタンは Google マップの階選択のように、マップの左に重ねた縦長の白い枠に並べる。エレベーターのように上の階ほど上 */}
+          {/* 画面が低い（Android やイベントのお知らせが出ているとき）と8個のボタンが入りきらないので、
+              枠の高さはマップの枠まで（max-h-full）にし、まずボタンを低くして収める。それでも入らなければ枠の中をスクロールする
+              （中央寄せのままだと上のボタンにスクロールで届かなくなるので上詰め。収まるときは枠ごと中央に置かれる） */}
+          {/* マップを指で動かしている・拡大している間は隠す */}
+          <TabsList
+            ref={floorListRef}
+            inert={hiddenUi !== null}
+            className={cn(
+              "pointer-events-auto ml-2 max-h-[calc(100%-1.5rem)] w-12 justify-start gap-0.5 overflow-y-auto rounded-full bg-background p-1 shadow-[0_4px_12px_rgb(0_0_0/0.2)] transition-opacity duration-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+              hiddenUi !== null && "opacity-0",
+            )}
+          >
+            {floorsTopDown.map((f) => (
+              <TabsTrigger
+                key={f}
+                value={f}
+                aria-label={`${f}階`}
+                className={cn(
+                  "w-10 flex-none rounded-full border-none p-0 text-base font-bold text-foreground",
+                  "data-active:bg-[#0048FF] data-active:text-white data-active:shadow-none",
+                  "dark:data-active:bg-[#0048FF] dark:data-active:text-white",
+                  // tabs.tsx の縦向き用の指定（group-data-vertical/tabs:justify-start）は同じ条件付きクラスでないと上書きできない
+                  "group-data-vertical/tabs:justify-center",
+                  // 普段は 40px の円。入りきらないときだけ縦に縮む（押しやすさを保てる 32px まで）
+                  "h-auto min-h-8 flex-[0_1_2.5rem]",
+                )}
+              >
+                F{f}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
         {/* 残りの幅と高さをマップの枠にする。縦長のマップも全体が収まるよう縮小して表示する
-            階を切り替えるときにスライドしてくるマップが、見出しやボトムシートにはみ出さないよう切り取る */}
+            階を切り替えるときにスライドしてくるマップが、上のお知らせにはみ出さないよう切り取る */}
         <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
           {floors.map((f) => (
             <TabsContent
@@ -272,13 +273,7 @@ function FloorTabs() {
 function FloorTabsSkeleton() {
   return (
     <div className="flex min-h-0 flex-1 flex-col" style={{ paddingBottom: SHEET_PEEK }}>
-      <FloorHeading floor={DEFAULT_FLOOR} />
-      <div className="flex min-h-0 flex-1 gap-2 px-4 pb-3">
-        <div className="flex w-10 shrink-0 flex-col gap-1.5 self-center">
-          {floorsTopDown.map((f) => (
-            <div key={f} className="size-10 rounded-lg border bg-background" />
-          ))}
-        </div>
+      <div className="flex min-h-0 flex-1 px-4 pt-3 pb-3">
         <div className="min-h-0 min-w-0 flex-1">
           <FloorMapSkeleton />
         </div>
@@ -287,7 +282,7 @@ function FloorTabsSkeleton() {
   );
 }
 
-/** 階の見出し + フロアマップ + 階切替ボタン。選択中の階は URL の ?floor= に保存する */
+/** フロアマップ + 階切替ボタン。選択中の階は URL の ?floor= に保存する */
 export default function FloorView() {
   // useSearchParams を使う部分は Suspense で囲む（無いと本番ビルドが失敗する）
   return (

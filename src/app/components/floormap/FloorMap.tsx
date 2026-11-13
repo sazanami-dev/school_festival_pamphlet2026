@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { loadFloor, type Floor } from "./floors";
 import { cn } from "@/lib/utils";
+import { SHEET_PEEK } from "./ExhibitionSheet";
 import { getFacilitiesOnFloor, getRoomsOnFloor, isOngoing, useNowInMinutes, type RoomInfo } from "./roomData";
 
 const MIN_SCALE = 1;
@@ -57,9 +58,9 @@ function getFloorSvg(floor: Floor) {
 }
 
 /**
- * マップの右に縦に並べる＋／−／リセットボタン（片手操作・PC用）。下にそろえる
+ * マップの右下に重ねて縦に並べる＋／−／リセットボタン（片手操作・PC用）
  * 縦に3つ並べると約 116px 要る。画面がとても低い（イベントのお知らせが出ている Android など）と
- * 枠がそれより低くなりはみ出すので、枠の高さが 8rem 未満のときだけ、マップの右下に重ねて横に並べる
+ * 枠がそれより低くなりはみ出すので、枠の高さが 8rem 未満のときだけ横に並べる
  * （枠の高さはコンテナクエリで見る。枠に [container:floormap/size] を付けている）
  */
 function ZoomControls({ hidden, onPress }: { hidden: boolean; onPress: () => void }) {
@@ -70,9 +71,9 @@ function ZoomControls({ hidden, onPress }: { hidden: boolean; onPress: () => voi
       inert={hidden}
       onPointerDown={onPress}
       className={cn(
-        "flex shrink-0 flex-col justify-end gap-1 transition-opacity duration-200",
+        "pointer-events-auto absolute right-2 bottom-3 flex flex-col gap-1 transition-opacity duration-200",
         hidden && "opacity-0",
-        "[@container_floormap_(height<8rem)]:absolute [@container_floormap_(height<8rem)]:right-2 [@container_floormap_(height<8rem)]:bottom-2 [@container_floormap_(height<8rem)]:flex-row",
+        "[@container_floormap_(height<8rem)]:bottom-2 [@container_floormap_(height<8rem)]:flex-row",
       )}
     >
       <Button variant="outline" size="icon-lg" aria-label="拡大" onClick={() => zoomIn(ZOOM_STEP)}>
@@ -106,7 +107,7 @@ function drawSelection(layer: SVGGElement, room: SVGGElement) {
   if (!shape) return;
   shape.removeAttribute("id");
   shape.setAttribute("fill", "none");
-  shape.setAttribute("stroke", "#2563eb");
+  shape.setAttribute("stroke", "#0048FF");
   shape.setAttribute("stroke-width", "4");
   layer.append(shape);
 }
@@ -136,7 +137,7 @@ function drawBadges(layer: SVGGElement, room: SVGGElement, info: RoomInfo, live:
   if (info.exhibitions.length > 0) {
     const { x: cx, y: cy } = badgeCenter(room, box, 11);
     layer.append(
-      svgElement("circle", { cx, cy, r: 11, fill: "#2563eb" }),
+      svgElement("circle", { cx, cy, r: 11, fill: "#0048FF" }),
       svgElement("text", { ...label, x: cx, y: cy, "font-size": 14 }, String(info.exhibitions.length)),
     );
   }
@@ -160,9 +161,9 @@ type FloorMapProps = {
 
 /**
  * マップを見やすくするため、まわりのボタンやシートをどこまで隠すか
- *   all    : マップ以外をすべて隠す（指でマップを動かしている間と、ピンチ・ダブルタップで拡大している間）
- *   others : ＋／−ボタンだけ残す（＋／−ボタンを押している間と、＋／−ボタンや「マップで場所を見る」で拡大している間）
- *   null   : 何も隠さない（等倍で、指も触れていない。マップをタップしただけのときも隠さない）
+ *   all    : マップ以外をすべて隠す（指でマップを動かしている間と、ピンチで拡大している間）
+ *   others : ＋／−ボタンだけ残す（＋／−ボタンを押している間）
+ *   null   : 何も隠さない（指が触れていない。拡大したままでも、指を離したら元に戻す。マップをタップしただけのときも隠さない）
  */
 export type HiddenUi = "all" | "others" | null;
 
@@ -184,20 +185,14 @@ function FloorSvg({
   const tapStart = useRef<{ pointerId: number; x: number; y: number } | null>(null);
   // 指（マウス）が今触れている場所。マップは実際に動いたら movedMap にする（タップだけでは隠さない）
   const pressed = useRef<"map" | "movedMap" | "buttons" | null>(null);
-  // 最後に拡大を始めたのが指（ピンチ・ダブルタップ・ホイール）か＋／−ボタンか
-  const zoomSource = useRef<"gesture" | "buttons">("buttons");
-  // 等倍より大きいか
-  const zoomed = useRef(false);
   const reportedHidden = useRef<HiddenUi>(null);
   // 最後に見たマップの位置と拡大率。実際に動いたかを比べる
   const lastTransform = useRef({ scale: MIN_SCALE, positionX: 0, positionY: 0 });
 
-  /** 触れている場所と拡大のしかたから、どこまで隠すかを決めて、変わったときだけ親に知らせる */
+  /** 触れている場所から、どこまで隠すかを決めて、変わったときだけ親に知らせる */
   function updateHidden() {
     const touch = pressed.current;
-    let next: HiddenUi = null;
-    if (touch === "movedMap" || (zoomed.current && zoomSource.current === "gesture")) next = "all";
-    else if (touch === "buttons" || zoomed.current) next = "others";
+    const next: HiddenUi = touch === "movedMap" ? "all" : touch === "buttons" ? "others" : null;
     if (next === reportedHidden.current) return;
     reportedHidden.current = next;
     onHiddenChange(next);
@@ -205,12 +200,11 @@ function FloorSvg({
 
   function press(target: "map" | "buttons") {
     pressed.current = target;
-    if (target === "buttons") zoomSource.current = "buttons";
     // ＋／−ボタンは押した時点で隠す。マップはタップかもしれないので、動き出すまで待つ
     updateHidden();
   }
 
-  // 指を離したら、触れている間だけの分を元に戻す（拡大している間は隠したまま）
+  // 指を離したら元に戻す（拡大したままでも戻す）
   // マップの外で離すこともあるので window で見る。
   // タッチは途中で pointercancel が来ることがあるので、残っている指の数（touches）で判断する
   const release = useEffectEvent(() => {
@@ -236,17 +230,11 @@ function FloorSvg({
 
   /** ピンチが始まったら（2本目の指が触れたら）、まだ動いていなくてもすべて隠す */
   function handlePinchStart() {
-    zoomSource.current = "gesture";
     pressed.current = "movedMap";
     updateHidden();
   }
 
-  /** 拡大縮小が始まったとき。ボタンや zoomToElement はライブラリが作った偽のイベント（isTrusted が false）で呼ぶ */
-  function handleZoomStart(_ref: ReactZoomPanPinchRef, event: Event) {
-    zoomSource.current = event.isTrusted ? "gesture" : "buttons";
-  }
-
-  /** 位置か拡大率が変わるたびに呼ばれる。マップに触れたまま実際に動いたときと、拡大しているときは隠す */
+  /** 位置か拡大率が変わるたびに呼ばれる。マップに触れたまま実際に動いたときは隠す */
   function handleTransform(_ref: ReactZoomPanPinchRef, state: { scale: number; positionX: number; positionY: number }) {
     const last = lastTransform.current;
     const moved =
@@ -255,9 +243,6 @@ function FloorSvg({
       Math.abs(state.positionY - last.positionY) > 0.5;
     lastTransform.current = { scale: state.scale, positionX: state.positionX, positionY: state.positionY };
     if (moved && pressed.current === "map") pressed.current = "movedMap";
-    zoomed.current = state.scale > MIN_SCALE + 0.01;
-    // 等倍に戻ったら、次の拡大（「マップで場所を見る」など）はボタン扱いから始める
-    if (!zoomed.current) zoomSource.current = "buttons";
     updateHidden();
   }
 
@@ -292,8 +277,6 @@ function FloorSvg({
     // 表示した直後は枠の大きさが決まっていないことがあるので、次の描画まで待つ
     // （型は HTML 要素しか受け付けないが、ID で渡せば SVG の <g id="T22"> も対象にできる。無い ID なら何もしない）
     const id = requestAnimationFrame(() => {
-      // 指で拡大したあとでも、この移動はボタンでの拡大として扱う（＋／−ボタンを残す）
-      zoomSource.current = "buttons";
       transformRef.current?.zoomToElement(focusRoom.room, { maxScale: FOCUS_MAX_SCALE });
     });
     return () => cancelAnimationFrame(id);
@@ -338,19 +321,22 @@ function FloorSvg({
       maxScale={MAX_SCALE}
       doubleClick={{ step: ZOOM_STEP }}
       onPinchStart={handlePinchStart}
-      onZoomStart={handleZoomStart}
       onTransform={handleTransform}
     >
-      {/* マップの右に拡大縮小ボタンの列を置く。マップは縦長で横に余白ができやすいので、
-          ボタンをマップに重ねず横に並べてもマップはほとんど小さくならない */}
-      <div className="relative flex size-full gap-2 [container:floormap/size]">
-        <div className="min-w-0 flex-1" onPointerDownCapture={() => press("map")}>
+      {/* マップの枠は画面の端とボトムシートの裏まで広げ、階ボタンと拡大縮小ボタンはマップに重ねる。
+          拡大したときはボタンやシートの下までマップが広がって見える */}
+      <div className="relative size-full">
+        <div className="size-full" onPointerDownCapture={() => press("map")}>
           <TransformComponent wrapperStyle={FILL} contentStyle={FILL}>
             {/* 枠いっぱいに広げ、縦横比を保ったまま全体が収まる大きさで中央に表示する */}
             <div
               ref={containerRef}
               // touch-none: ブラウザのスクロールや引っ張って更新を止め、指の動きをすべてマップで扱う
-              className={cn("size-full touch-none [&>svg]:block [&>svg]:size-full", ROOM_STYLES)}
+              // 等倍のときはボタンに重ならないよう、左は階ボタン（ml-2 + w-12）、右は拡大縮小ボタン（right-2 + size-9）の幅だけ空ける。
+              // 下はボトムシートに隠れないよう、閉じたシートの高さ（SHEET_PEEK）の分も空ける
+              // 余白も一緒に拡大されるので、拡大するとマップがボタンやシートの下まで広がる
+              className={cn("size-full touch-none pt-3 pr-13 pl-16 [&>svg]:block [&>svg]:size-full", ROOM_STYLES)}
+              style={{ paddingBottom: `calc(${SHEET_PEEK} + 0.75rem)` }}
               onPointerDown={handlePointerDown}
               onPointerUp={handlePointerUp}
               onPointerCancel={() => (tapStart.current = null)}
@@ -358,7 +344,13 @@ function FloorSvg({
             />
           </TransformComponent>
         </div>
-        <ZoomControls hidden={hidden === "all"} onPress={() => press("buttons")} />
+        {/* 拡大縮小ボタンはシートに隠れない範囲に置く。低い画面で横に並べるかは、この範囲の高さで決める */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 [container:floormap/size]"
+          style={{ bottom: SHEET_PEEK }}
+        >
+          <ZoomControls hidden={hidden === "all"} onPress={() => press("buttons")} />
+        </div>
       </div>
     </TransformWrapper>
   );
