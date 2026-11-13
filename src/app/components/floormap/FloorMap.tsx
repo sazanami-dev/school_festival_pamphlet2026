@@ -57,9 +57,9 @@ function getFloorSvg(floor: Floor) {
 }
 
 /**
- * マップの右に縦に並べる＋／−／リセットボタン（片手操作・PC用）。下にそろえる
+ * マップの右下に重ねて縦に並べる＋／−／リセットボタン（片手操作・PC用）
  * 縦に3つ並べると約 116px 要る。画面がとても低い（イベントのお知らせが出ている Android など）と
- * 枠がそれより低くなりはみ出すので、枠の高さが 8rem 未満のときだけ、マップの右下に重ねて横に並べる
+ * 枠がそれより低くなりはみ出すので、枠の高さが 8rem 未満のときだけ横に並べる
  * （枠の高さはコンテナクエリで見る。枠に [container:floormap/size] を付けている）
  */
 function ZoomControls({ hidden, onPress }: { hidden: boolean; onPress: () => void }) {
@@ -70,9 +70,9 @@ function ZoomControls({ hidden, onPress }: { hidden: boolean; onPress: () => voi
       inert={hidden}
       onPointerDown={onPress}
       className={cn(
-        "flex shrink-0 flex-col justify-end gap-1 transition-opacity duration-200",
+        "absolute right-2 bottom-3 flex flex-col gap-1 transition-opacity duration-200",
         hidden && "opacity-0",
-        "[@container_floormap_(height<8rem)]:absolute [@container_floormap_(height<8rem)]:right-2 [@container_floormap_(height<8rem)]:bottom-2 [@container_floormap_(height<8rem)]:flex-row",
+        "[@container_floormap_(height<8rem)]:bottom-2 [@container_floormap_(height<8rem)]:flex-row",
       )}
     >
       <Button variant="outline" size="icon-lg" aria-label="拡大" onClick={() => zoomIn(ZOOM_STEP)}>
@@ -341,21 +341,22 @@ function FloorSvg({
       onZoomStart={handleZoomStart}
       onTransform={handleTransform}
     >
-      {/* マップの右に拡大縮小ボタンの列を置く。マップは縦長で横に余白ができやすいので、
-          ボタンをマップに重ねず横に並べてもマップはほとんど小さくならない */}
-      <div className="relative flex size-full gap-2 [container:floormap/size]">
-        {/* 右のボタンの列（size-9 + gap-2）と同じだけ左も空けて、マップを左右の中央に置く
-            （ボタンをマップに重ねる低い枠では空けない） */}
-        <div
-          className="min-w-0 flex-1 pl-11 [@container_floormap_(height<8rem)]:pl-0"
-          onPointerDownCapture={() => press("map")}
-        >
+      {/* マップの枠は画面の端まで広げ、階ボタンと拡大縮小ボタンはマップに重ねる。
+          拡大したときはボタンの下までマップが広がって見える */}
+      <div className="relative size-full [container:floormap/size]">
+        <div className="size-full" onPointerDownCapture={() => press("map")}>
           <TransformComponent wrapperStyle={FILL} contentStyle={FILL}>
             {/* 枠いっぱいに広げ、縦横比を保ったまま全体が収まる大きさで中央に表示する */}
             <div
               ref={containerRef}
               // touch-none: ブラウザのスクロールや引っ張って更新を止め、指の動きをすべてマップで扱う
-              className={cn("size-full touch-none [&>svg]:block [&>svg]:size-full", ROOM_STYLES)}
+              // 等倍のときはボタンに重ならないよう、左は階ボタン（left-2 + w-12）、右は拡大縮小ボタン（right-2 + size-9）の幅だけ空ける。
+              // 余白も一緒に拡大されるので、拡大するとマップがボタンの下まで広がる
+              // （ボタンを横に並べる低い枠では、右のボタンはマップの下に重なるので右を空けない）
+              className={cn(
+                "size-full touch-none py-3 pr-13 pl-16 [@container_floormap_(height<8rem)]:pr-2 [&>svg]:block [&>svg]:size-full",
+                ROOM_STYLES,
+              )}
               onPointerDown={handlePointerDown}
               onPointerUp={handlePointerUp}
               onPointerCancel={() => (tapStart.current = null)}

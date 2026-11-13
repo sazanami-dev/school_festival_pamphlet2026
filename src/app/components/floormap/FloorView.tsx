@@ -180,7 +180,8 @@ function FloorTabs() {
       className="min-h-0 flex-1 flex-col gap-0"
       style={{ paddingBottom: SHEET_PEEK }}
     >
-      <div className="relative flex min-h-0 flex-1 px-4 pt-3 pb-3">
+      {/* マップを拡大したときに広く見られるよう、マップの枠は画面の端まで広げる（余白は FloorMap の中で空ける） */}
+      <div className="relative flex min-h-0 flex-1">
         {/* 階切替ボタンは Google マップの階選択のように、マップの左に重ねた縦長の白い枠に並べる。エレベーターのように上の階ほど上 */}
         {/* 画面が低い（Android やイベントのお知らせが出ているとき）と8個のボタンが入りきらないので、
             枠の高さはマップの枠まで（max-h-full）にし、まずボタンを低くして収める。それでも入らなければ枠の中をスクロールする
@@ -214,7 +215,7 @@ function FloorTabs() {
           ))}
         </TabsList>
         {/* 残りの幅と高さをマップの枠にする。縦長のマップも全体が収まるよう縮小して表示する
-            階を切り替えるときにスライドしてくるマップが、見出しやボトムシートにはみ出さないよう切り取る */}
+            階を切り替えるときにスライドしてくるマップが、上のお知らせやボトムシートにはみ出さないよう切り取る */}
         <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
           {floors.map((f) => (
             <TabsContent
