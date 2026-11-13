@@ -396,6 +396,9 @@ function mapHref(ev: EventItem): string {
 /** 次のカードが少し見えるよう、幅は画面の 90% にする(横にスワイプできると分かるように) */
 const APP_CARD_WIDTH = "w-[90%] md:w-[320px] 2xl:w-[440px]";
 
+/** 背景の帯を敷かず、カードだけを影で浮かせる(影が切れないよう、並べる枠の下に余白を空けている) */
+const APP_FLOAT_SHADOW = "shadow-[0_2px_8px_rgb(0_0_0/0.15)]";
+
 /** 1件分。左に場所(出展一覧と同じ青いラベル)、右にイベント名と「開催中・時間・残り時間」。タップでマップのその教室へ */
 function AppCard({ ev }: { ev: ActiveEvent }) {
   const isLive = ev.status === "live";
@@ -404,7 +407,7 @@ function AppCard({ ev }: { ev: ActiveEvent }) {
     <li className={cn("shrink-0 snap-start", APP_CARD_WIDTH)}>
       <Link
         href={mapHref(ev)}
-        className="flex h-full items-start gap-3 rounded-lg border bg-background px-3 py-2 transition-colors hover:bg-muted active:bg-muted"
+        className={cn("flex h-full items-start gap-3 rounded-lg bg-background px-3 py-2 transition-colors hover:bg-muted active:bg-muted", APP_FLOAT_SHADOW)}
       >
         <span className="shrink-0 rounded-md bg-blue-600 px-2 py-0.5 text-sm font-bold text-white">
           {ev.floor}F {ev.location.replaceAll(",", "・")}
@@ -438,7 +441,7 @@ function AppMoreCard({ href }: { href: string }) {
     <li className="shrink-0 snap-start">
       <Link
         href={href}
-        className="flex h-full items-center gap-1 rounded-lg border bg-background px-3 text-sm font-bold text-blue-600 transition-colors hover:bg-muted active:bg-muted"
+        className={cn("flex h-full items-center gap-1 rounded-lg bg-background px-3 text-sm font-bold text-blue-600 transition-colors hover:bg-muted active:bg-muted", APP_FLOAT_SHADOW)}
       >
         タイムテーブル
         <ArrowRight className="size-4" aria-hidden />
@@ -767,8 +770,8 @@ function TableMoreColumn({ href }: { href: string }) {
 function frameClass(variant: Variant, atBottom: boolean): string {
   switch (variant) {
     case "app":
-      // 見出しも時計も出さず、カードだけを並べて低くする
-      return cn("bg-background py-2 text-foreground", !atBottom && "border-b");
+      // 見出しも時計も出さず、背景の帯も敷かずにカードだけを浮かせて低くする
+      return "text-foreground";
     case "led":
       return "bg-[#0d0d12] pt-3.5 pb-4 text-white 2xl:pt-6 2xl:pb-6";
     case "pop":
@@ -785,7 +788,8 @@ function frameClass(variant: Variant, atBottom: boolean): string {
 }
 
 const LIST_CLASS: Record<Variant, string> = {
-  app: "scroll-px-4 gap-2 px-4 md:scroll-px-8 md:px-8",
+  // 横スクロールの枠は縦にはみ出した影も切り取るので、上下に影の分の余白を空ける
+  app: "scroll-px-4 gap-2 px-4 pt-2 pb-3 md:scroll-px-8 md:px-8",
   led: "scroll-px-4 gap-2.5 px-4 pb-0.5 md:scroll-px-8 md:gap-4 md:px-8",
   pop: "scroll-px-4 gap-3.5 px-4 pb-3 md:scroll-px-8 md:gap-5 md:px-8 2xl:pb-4",
   timetable: "scroll-pl-4 pl-4 md:scroll-pl-8 md:pl-8",
@@ -1014,7 +1018,7 @@ function NextStrip({
 
   const tone =
     variant === "app"
-      ? cn("bg-background text-muted-foreground", !atBottom && "border-b")
+      ? "text-muted-foreground"
       : variant === "led"
       ? "bg-[#0d0d12] text-[#a9a9bb]"
       : variant === "pop"
@@ -1032,7 +1036,12 @@ function NextStrip({
       aria-label="次のイベント"
       className={cn("px-4 py-2 md:px-8 2xl:py-3", tone)}
     >
-      <p className="flex items-center gap-1.5 text-[13px] leading-5 2xl:text-lg">
+      <p
+        className={cn(
+          "flex items-center gap-1.5 text-[13px] leading-5 2xl:text-lg",
+          variant === "app" && cn("rounded-lg bg-background px-3 py-2", APP_FLOAT_SHADOW),
+        )}
+      >
         <Clock className="size-4 shrink-0 2xl:size-5" aria-hidden />
         <span className="truncate">
           次は {event.startTime}〜 {event.eventName}
@@ -1049,7 +1058,7 @@ function EventInfoSkeleton({ variant }: { variant: Variant }) {
       aria-hidden
       className={cn(
         "px-4 py-3.5 md:px-8",
-        variant === "app" && "border-b bg-background py-2",
+        variant === "app" && "pt-2 pb-3",
         variant === "led" && "bg-[#0d0d12]",
         variant === "pop" && "border-y-[3px] border-[#111] bg-[#ffd60a]",
         variant === "timetable" &&
