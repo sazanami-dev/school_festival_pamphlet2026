@@ -10,8 +10,10 @@ import rallyData from "@/data/rally.json";
 export type Checkpoint = {
   id: string;
   name: string;
-  /** ExhibitionInfo.json の id（マップで場所を開くのに使う） */
-  exhibitionId: string;
+  /** ExhibitionInfo.json の id（マップで場所を開くのに使う）。出展のない場所では省く */
+  exhibitionId?: string;
+  /** マップの教室ID（例: "f1-reception-1"）。出展のない場所用で、あれば exhibitionId より優先する */
+  room?: string;
   floor: string;
   location: string;
   /** 未獲得のときに出す場所のヒント */
@@ -41,12 +43,13 @@ export function formatFloorPlace(place: { floor: string; location: string }): st
 
 /**
  * マップでそのチェックポイントの場所を開くリンク。例: /?floor=3&room=T32
- * 部屋は出展データの location（マップの教室ID）を使う（ExhibitionDetailModal の mapHref と同じ形）
+ * 部屋は room、なければ出展データの location（マップの教室ID）を使う（ExhibitionDetailModal の mapHref と同じ形）
+ * どちらもなければ階のマップを開くだけ
  */
 export function checkpointMapHref(checkpoint: Checkpoint): string {
   const params = new URLSearchParams({ floor: checkpoint.floor });
   const exhibition = exhibitionData.find((e) => e.id === checkpoint.exhibitionId);
-  const room = exhibition?.location.split(",")[0].trim();
+  const room = checkpoint.room ?? exhibition?.location.split(",")[0].trim();
   if (room) params.set("room", room);
   return `/?${params.toString()}`;
 }
