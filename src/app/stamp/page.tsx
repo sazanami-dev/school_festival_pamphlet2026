@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { LuStamp } from "react-icons/lu";
-import { MdInfoOutline, MdOutlineKey, MdOutlineRedeem, MdQrCodeScanner } from "react-icons/md";
+import { MdInfoOutline, MdOutlineKey, MdQrCodeScanner } from "react-icons/md";
 import { formatCode } from "@/lib/rally/code";
 import {
   checkpointMapHref,
@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { joinAction } from "./actions";
 import CardDialog from "./components/CardDialog";
 import CopyButton from "./components/CopyButton";
+import ExchangeDialog from "./components/ExchangeDialog";
 import Notice from "./components/Notice";
 import StampPress from "./components/StampPress";
 import SubmitButton from "./components/SubmitButton";
@@ -280,40 +281,19 @@ function JoinedView({
             <MdQrCodeScanner aria-hidden className="size-6 text-[#E3E3E3]" />
             コードをスキャン
           </Link>
-          <ExchangeButton count={count} redeemed={progress.redeemedAt !== null} />
+          <ExchangeDialog
+            enough={count >= rallyConfig.requiredStamps}
+            redeemed={progress.redeemedAt !== null}
+            prizeName={rallyConfig.prizeName}
+            place={`${rallyConfig.exchangePlace.name}（${formatFloorPlace(rallyConfig.exchangePlace)}）`}
+            hours={formatRallyHours("exchange")}
+          />
         </div>
       </TopArea>
       <BottomArea>
         <CheckpointGrid acquired={acquired} justStamped={justStamped} />
       </BottomArea>
     </div>
-  );
-}
-
-/** 景品交換へ進むボタン。いつも出しておき、必要な数に届くまでと交換したあとは押せないようにする */
-function ExchangeButton({ count, redeemed }: { count: number; redeemed: boolean }) {
-  const className = "flex h-12.5 w-full items-center justify-center gap-2.5 rounded-[10px] font-bold";
-  const body = (
-    <>
-      <MdOutlineRedeem aria-hidden className="size-6" />
-      {redeemed ? "クーポンに交換済みです" : "スタンプをクーポンに交換する"}
-    </>
-  );
-
-  if (redeemed || count < rallyConfig.requiredStamps) {
-    return (
-      <span role="link" aria-disabled="true" className={cn(className, "bg-[#E3E3E3] text-[#A0A0A0]")}>
-        {body}
-      </span>
-    );
-  }
-  return (
-    <Link
-      href="/stamp/exchange"
-      className={cn(className, "border-2 border-[#0048FF] bg-white text-[#0048FF] transition active:opacity-80")}
-    >
-      {body}
-    </Link>
   );
 }
 

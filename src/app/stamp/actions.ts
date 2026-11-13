@@ -67,7 +67,7 @@ export async function recoverWithStampAction(_prev: FormState, formData: FormDat
   redirect(collectResultUrl(await collectStamp(result.participant.id, String(formData.get("cp") ?? ""))));
 }
 
-/** 交換用QRを発行する（/stamp/exchange の「交換する」） */
+/** 交換用QRを発行する（/stamp の景品交換モーダルの「交換する」） */
 export async function issueExchangeTokenAction(): Promise<IssueExchangeResult | { status: "not_joined" }> {
   const participant = await getCurrentParticipant();
   if (!participant) return { status: "not_joined" };
