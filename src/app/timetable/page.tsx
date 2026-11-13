@@ -297,7 +297,7 @@ export default function Timetable() {
       {/* イベント詳細モーダル */}
       {selectedEvent && (
         <div
-          className="fixed inset-0 z-50 flex -center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           onClick={() => setSelectedEvent(null)}
         >
           <div
@@ -366,21 +366,22 @@ export default function Timetable() {
               </p>
             </div>
 
-            {/* マップで場所を見る */}
-            <button onClick={() => handleClick(selectedEvent!)}
-              className="w-auto rounded-lg bg-blue-600 p-3 mb-3 font-semibold text-white transition hover:bg-blue-700"
-            >
-              マップで場所を見る
-            </button>
+            <div className="flex gap-3">
+              {/* マップで場所を見る */}
+              <button onClick={() => handleClick(selectedEvent!)}
+                className="flex-1 rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700"
+              >
+                マップで場所を見る
+              </button>
 
-
-            {/* 閉じる */}
-            <button
-              onClick={() => setSelectedEvent(null)}
-              className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700"
-            >
-              閉じる
-            </button>
+              {/* 閉じる */}
+              <button
+                onClick={() => setSelectedEvent(null)}
+                className="flex-1 rounded-lg border border-gray-300 bg-white py-3 font-semibold text-gray-700 transition hover:bg-gray-100"
+              >
+                閉じる
+              </button>
+            </div>
 
           </div>
         </div>
