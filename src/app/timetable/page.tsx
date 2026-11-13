@@ -5,6 +5,7 @@ import { useRef, useState, useEffect } from "react";
 import eventsData from "../../data/event.json";
 import { useRouter } from "next/navigation";
 import { getGenreColor } from "@/components/ExhibitionDetailModal";
+import { MdPlace } from "react-icons/md";
 import { cn } from "@/lib/utils";
 import PageTitle from "@/components/PageTitle";
 
@@ -260,7 +261,8 @@ export default function Timetable() {
                       {event.startTime} ～ {event.endTime}
                     </p>
                     {/*場所*/}
-                    <p className="mt-1 text-sm text-gray-600">
+                    <p className="mt-1 flex items-center gap-1 font-semibold text-gray-800">
+                      <MdPlace className="shrink-0 text-blue-600" aria-hidden />
                       {event.floor}階 {event.location}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
