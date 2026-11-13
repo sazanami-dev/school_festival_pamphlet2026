@@ -11,6 +11,9 @@ const played = new Set<string>();
  *
  * 見せたあとは URL から ?got= を消し、再読み込みしても繰り返さないようにする。
  * replaceState はページを読み直さないので、上のお知らせはそのまま残る。
+ *
+ * cacheComponents では、離れたページを消さずに display: none で隠して残し（Activity）、戻ると表示し直す。
+ * 表示し直すと CSS アニメーションは最初から再生されるので、終わったらクラスを外す。
  */
 export default function StampPress({
   stampId,
@@ -22,7 +25,7 @@ export default function StampPress({
   className?: string;
   children?: React.ReactNode;
 }) {
-  const [play] = useState(() => stampId !== undefined && !played.has(stampId));
+  const [play, setPlay] = useState(() => stampId !== undefined && !played.has(stampId));
 
   useEffect(() => {
     if (!stampId) return;
@@ -34,5 +37,12 @@ export default function StampPress({
     window.history.replaceState(null, "", url);
   }, [stampId]);
 
-  return <div className={cn(className, play && "relative z-10 motion-safe:animate-stamp-press")}>{children}</div>;
+  return (
+    <div
+      onAnimationEnd={(e) => e.target === e.currentTarget && setPlay(false)}
+      className={cn(className, play && "relative z-10 motion-safe:animate-stamp-press")}
+    >
+      {children}
+    </div>
+  );
 }
