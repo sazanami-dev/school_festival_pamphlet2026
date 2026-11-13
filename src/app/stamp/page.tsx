@@ -43,13 +43,27 @@ function firstParam(value: string | string[] | undefined): string | undefined {
 async function StampHome({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const [participant, params] = await Promise.all([getCurrentParticipant(), searchParams]);
   const progress = participant ? await getProgress(participant.id) : null;
-  const notice = <ResultNotice params={params} acquired={new Set(progress?.stampIds)} />;
+  const acquired = new Set(progress?.stampIds);
+  const notice = <ResultNotice params={params} acquired={acquired} />;
 
   return participant && progress ? (
-    <JoinedView participant={participant} progress={progress} justJoined={params.joined === "1"} notice={notice} />
+    <JoinedView
+      participant={participant}
+      progress={progress}
+      justJoined={params.joined === "1"}
+      justStamped={justStampedId(params, acquired)}
+      notice={notice}
+    />
   ) : (
     <NotJoinedView notice={notice} />
   );
+}
+
+/** いま新しく押したスタンプのID（アニメーションを見せる）。獲得済みのQRを読み直したときは無し */
+function justStampedId(params: SearchParams, acquired: Set<string>): string | undefined {
+  const got = getCheckpoint(firstParam(params.got) ?? "");
+  if (!got || !acquired.has(got.id) || firstParam(params.already) === "1") return undefined;
+  return got.id;
 }
 
 /**
@@ -115,8 +129,9 @@ function HowToPlayContent() {
 /**
  * スタンプカード。枠の数は景品に必要な個数で、集めた数だけ左上から順に押していく
  * （どのチェックポイントのスタンプかは下の一覧で見せる）
+ * justStamped のときは、いま押した最後の1個にスタンプを押すアニメーションを付ける
  */
-function StampCard({ count }: { count: number }) {
+function StampCard({ count, justStamped }: { count: number; justStamped: boolean }) {
   const required = rallyConfig.requiredStamps;
 
   return (
@@ -138,7 +153,12 @@ function StampCard({ count }: { count: number }) {
         {Array.from({ length: required }, (_, i) => (
           <li key={i}>
             {i < count ? (
-              <div className="flex size-12 items-center justify-center rounded-full bg-[#0048FF]">
+              <div
+                className={cn(
+                  "flex size-12 items-center justify-center rounded-full bg-[#0048FF]",
+                  justStamped && i === count - 1 && "relative z-10 motion-safe:animate-stamp-press",
+                )}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element -- 小さいSVGなので最適化は不要 */}
                 <img src="/sazanami_icon.svg" alt="" className="size-8" />
               </div>
@@ -153,12 +173,17 @@ function StampCard({ count }: { count: number }) {
 }
 
 /** チェックポイントの一覧（2列） */
-function CheckpointGrid({ acquired }: { acquired: Set<string> }) {
+function CheckpointGrid({ acquired, justStamped }: { acquired: Set<string>; justStamped?: string }) {
   return (
     <ul className="grid grid-cols-2 gap-3.5">
       {checkpoints.map((cp, index) => (
         <li key={cp.id}>
-          <StampTile number={index + 1} checkpoint={cp} acquired={acquired.has(cp.id)} />
+          <StampTile
+            number={index + 1}
+            checkpoint={cp}
+            acquired={acquired.has(cp.id)}
+            justStamped={cp.id === justStamped}
+          />
         </li>
       ))}
     </ul>
@@ -214,11 +239,13 @@ function JoinedView({
   participant,
   progress,
   justJoined,
+  justStamped,
   notice,
 }: {
   participant: Participant;
   progress: ParticipantProgress;
   justJoined: boolean;
+  justStamped?: string;
   notice: React.ReactNode;
 }) {
   const acquired = new Set(progress.stampIds);
@@ -232,7 +259,7 @@ function JoinedView({
         {notice}
         {!open && <Notice tone="error" title={`現在は受付時間外です（${formatRallyHours()}）`} />}
         {justJoined && <RecoveryCodeCard code={participant.recoveryCode} highlight />}
-        <StampCard count={count} />
+        <StampCard count={count} justStamped={justStamped !== undefined} />
         <div className="space-y-3 px-2">
           <Link
             href="/stamp/scan"
@@ -245,7 +272,7 @@ function JoinedView({
         </div>
       </TopArea>
       <BottomArea>
-        <CheckpointGrid acquired={acquired} />
+        <CheckpointGrid acquired={acquired} justStamped={justStamped} />
         {!justJoined && <RecoveryCodeCard code={participant.recoveryCode} />}
       </BottomArea>
     </div>
@@ -285,15 +312,22 @@ function StampTile({
   number,
   checkpoint,
   acquired,
+  justStamped,
 }: {
   number: number;
   checkpoint: (typeof checkpoints)[number];
   acquired: boolean;
+  justStamped: boolean;
 }) {
   const body = (
     <>
       {acquired ? (
-        <div className="flex size-22 items-center justify-center rounded-full bg-[#0048FF] p-1.5">
+        <div
+          className={cn(
+            "flex size-22 items-center justify-center rounded-full bg-[#0048FF] p-1.5",
+            justStamped && "motion-safe:animate-stamp-press",
+          )}
+        >
           <div className="flex size-full items-center justify-center rounded-full border-2 border-white">
             <LuStamp aria-hidden className="size-12 text-white" strokeWidth={1.5} />
           </div>

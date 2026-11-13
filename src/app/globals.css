@@ -47,6 +47,29 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* スタンプを押すアニメーション（QRを読んでスタンプ トップに戻ってきたとき）。画面が出てから少し待って押す */
+@theme {
+    --animate-stamp-press: stamp-press 0.6s cubic-bezier(0.3, 0.7, 0.4, 1) 0.3s both;
+
+    @keyframes stamp-press {
+        0% {
+            opacity: 0;
+            transform: scale(2.4) rotate(-15deg);
+        }
+        55% {
+            opacity: 1;
+            transform: scale(0.88) rotate(3deg);
+        }
+        75% {
+            transform: scale(1.06) rotate(-1deg);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+    }
+}
+
 :root {
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
