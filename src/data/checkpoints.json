@@ -1,11 +1,16 @@
 [
-  { "id": "cp-01", "name": "ステラコーヒー", "exhibitionId": "ex-07", "floor": "1", "location": "エントランスホール", "hint": "1階 エントランスホールに掲示" },
-  { "id": "cp-02", "name": "Trident Coffee", "exhibitionId": "ex-08", "floor": "2", "location": "ラウンジ", "hint": "2階 ラウンジに掲示" },
-  { "id": "cp-03", "name": "チーム出the印", "exhibitionId": "ex-10", "floor": "3", "location": "T32", "hint": "3階 T32 の入口に掲示" },
-  { "id": "cp-04", "name": "さざなみ開発", "exhibitionId": "ex-13", "floor": "3", "location": "T36", "hint": "3階 T36 の入口に掲示" },
-  { "id": "cp-05", "name": "ゲーム開発研究部", "exhibitionId": "ex-14", "floor": "4", "location": "ラーニングコモンズ", "hint": "4階 ラーニングコモンズに掲示" },
-  { "id": "cp-06", "name": "ONE SHOT CAFE", "exhibitionId": "ex-20", "floor": "5", "location": "トライデントラボ", "hint": "5階 トライデントラボに掲示" },
-  { "id": "cp-07", "name": "卒業制作作品展示", "exhibitionId": "ex-22", "floor": "6", "location": "T62", "hint": "6階 T62 の入口に掲示" },
-  { "id": "cp-08", "name": "デュエランド", "exhibitionId": "ex-26", "floor": "7", "location": "T74", "hint": "7階 T74 の入口に掲示" },
-  { "id": "cp-09", "name": "CG作品展示・上映", "exhibitionId": "ex-27", "floor": "8", "location": "T81", "hint": "8階 T81 の入口に掲示" }
+  { "id": "cp-01", "name": "炎上ポップコーン", "exhibitionId": "ex-03", "floor": "1", "location": "飲食店エリア", "hint": "1階 飲食店エリアに掲示" },
+  { "id": "cp-02", "name": "エントランス", "room": "f1-reception-1", "floor": "1", "location": "エントランスホール", "hint": "1階 エントランスホールのモニターの上に掲示" },
+  { "id": "cp-03", "name": "Trident Coffee", "exhibitionId": "ex-08", "floor": "2", "location": "ラウンジ", "hint": "2階 ラウンジに掲示" },
+  { "id": "cp-04", "name": "休憩室", "room": "T28", "floor": "2", "location": "T28", "hint": "2階 T28 の教室内に掲示" },
+  { "id": "cp-05", "name": "さざなみ開発", "exhibitionId": "ex-13", "floor": "3", "location": "T36", "hint": "3階 T36 の教室内に掲示" },
+  { "id": "cp-06", "name": "クラブ出the印", "exhibitionId": "ex-09", "floor": "3", "location": "T31", "hint": "3階 T31 前の壁に掲示" },
+  { "id": "cp-07", "name": "ゲーム開発研究部", "exhibitionId": "ex-14", "floor": "4", "location": "ラーニングコモンズ", "hint": "4階 ラーニングコモンズの柱に掲示" },
+  { "id": "cp-08", "name": "あるてぃめっとげーせん", "exhibitionId": "ex-15", "floor": "4", "location": "T41", "hint": "4階 T41 前の壁に掲示" },
+  { "id": "cp-09", "name": "ONE SHOT CAFE", "exhibitionId": "ex-20", "floor": "5", "location": "トライデントラボ", "hint": "5階 トライデントラボに掲示" },
+  { "id": "cp-10", "name": "スト6トーナメント大会", "exhibitionId": "ex-21", "floor": "5", "location": "T56", "hint": "5階 T56 に掲示" },
+  { "id": "cp-11", "name": "卒業制作作品展示", "exhibitionId": "ex-22", "room": "T64", "floor": "6", "location": "T64", "hint": "6階 T64 前に掲示" },
+  { "id": "cp-12", "name": "ラーニングコモンズの階段", "room": "f6-learning-commons-1", "floor": "6", "location": "ラーニングコモンズ", "hint": "6階 ラーニングコモンズの階段に掲示" },
+  { "id": "cp-13", "name": "ラーニングコモンズ", "room": "f7-learning-commons-1", "floor": "7", "location": "ラーニングコモンズ", "hint": "7階 ラーニングコモンズのゴミ箱の後ろに掲示" },
+  { "id": "cp-14", "name": "CG作品展示・上映", "exhibitionId": "ex-27", "room": "T86", "floor": "8", "location": "T86", "hint": "8階 T86 前に掲示" }
 ]
