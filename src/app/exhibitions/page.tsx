@@ -4,10 +4,10 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import ExhibitionCard from "@/components/ExhibitionCard";
+import { floorButtonClass } from "@/components/floorButton";
 import ExhibitionDetailModal, {
   formatPlace,
-  formatTimeRange,
-  GenreBadges,
   getGenreColor,
   sortGenres,
   type Exhibition,
@@ -109,7 +109,7 @@ const allGenres = sortGenres([...new Set(exhibitions.flatMap((e) => e.genre))]);
  * ======================================================= */
 
 const chipClass =
-  "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground";
+  "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors aria-pressed:border-blue-500 aria-pressed:bg-blue-500 aria-pressed:text-white";
 
 /** ジャンル絞り込みチップ（横スクロール・複数選択可） */
 function GenreChips({
@@ -146,17 +146,103 @@ function GenreChips({
   );
 }
 
+/** 階ジャンプバーの高さ（h-14 = 56px） */
+const JUMP_BAR_HEIGHT = 56;
+/** スクロールイベントがこの時間来なければ、スクロールが止まったとみなす */
+const SCROLL_END_MS = 150;
+/** ボタンで移動するとき、押した階に着くまで待つ最長の時間（途中で指で止められたときなど） */
+const JUMP_TIMEOUT_MS = 3000;
+
+/** その階の見出しがバーのすぐ下まで来たか（一番下までスクロールしきったときも着いたとみなす） */
+function reachedFloor(floor: string) {
+  const top = document.getElementById(`floor-${floor}`)?.getBoundingClientRect().top;
+  const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+  return atBottom || (top !== undefined && Math.abs(top - JUMP_BAR_HEIGHT) <= 2);
+}
+
 /**
  * 階ジャンプボタン。スクロールしても上部に残る（sticky）。
  * 高さ h-14 は、階見出しの top-14 と各階セクションの scroll-mt-14 と合わせている。
+ * 今見ている階のボタンは、マップの階ボタンと同じく青くする。
  */
 function FloorJumpBar({ activeFloors }: { activeFloors: Set<string> }) {
-  function jump(floor: string) {
+  const [current, setCurrent] = useState<string | null>(null);
+  // ボタンで移動した階（着くまでの間、この階を青くしておく）
+  const jumpedTo = useRef<string | null>(null);
+  const barRef = useRef<HTMLElement>(null);
+  // ボタンで移動している間は、通り過ぎる階を青くしないよう、スクロールが止まるまで押した階のままにする
+  const jumping = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const jumpDeadline = useRef(0);
+  const endJumpRef = useRef<() => void>(() => {});
+
+  // スクロールに合わせて「今見ている階」を求める
+  useEffect(() => {
+    const floors = allFloors.filter((f) => activeFloors.has(f));
+    function update() {
+      // バーの下まで上がってきた階のうち、一番下のもの。まだどこも上がっていなければ最初の階
+      let found = floors[0] ?? null;
+      for (const f of floors) {
+        const top = document.getElementById(`floor-${f}`)?.getBoundingClientRect().top;
+        if (top !== undefined && top <= JUMP_BAR_HEIGHT + 1) found = f;
+      }
+      setCurrent(found);
+    }
+    function endJump() {
+      // スクロールが始まる前や途中で止まっただけなら、押した階に着くまで待ち続ける
+      if (jumpedTo.current && !reachedFloor(jumpedTo.current) && performance.now() < jumpDeadline.current) {
+        jumping.current = setTimeout(endJump, SCROLL_END_MS);
+        return;
+      }
+      jumping.current = null;
+      update();
+    }
+    endJumpRef.current = endJump;
+    let frame = 0;
+    function onScroll() {
+      if (jumping.current) {
+        // スクロールが続いている間は待ち、止まってから今の階を求め直す
+        clearTimeout(jumping.current);
+        jumping.current = setTimeout(endJump, SCROLL_END_MS);
+        return;
+      }
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    }
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [activeFloors]);
+
+  // 青いボタンが横にはみ出していたら、見える位置までバーを横スクロールする
+  useEffect(() => {
+    const bar = barRef.current;
+    const button = bar?.querySelector<HTMLElement>("[data-active]");
+    if (!bar || !button) return;
+    const left = button.offsetLeft - bar.offsetLeft;
+    const right = left + button.offsetWidth;
+    if (left < bar.scrollLeft || right > bar.scrollLeft + bar.clientWidth) {
+      bar.scrollTo({ left: left - (bar.clientWidth - button.offsetWidth) / 2, behavior: "smooth" });
+    }
+  }, [current]);
+
+  /** clickedAt はタップした時刻（event.timeStamp。performance.now() と同じ基準） */
+  function jump(floor: string, clickedAt: number) {
+    jumpedTo.current = floor;
+    setCurrent(floor);
+    if (jumping.current) clearTimeout(jumping.current);
+    jumpDeadline.current = clickedAt + JUMP_TIMEOUT_MS;
+    jumping.current = setTimeout(endJumpRef.current, SCROLL_END_MS);
     document.getElementById(`floor-${floor}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
     <nav
+      ref={barRef}
       aria-label="階へ移動"
       className="sticky top-0 z-20 flex h-14 items-center gap-2 overflow-x-auto border-b bg-background px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
@@ -165,38 +251,16 @@ function FloorJumpBar({ activeFloors }: { activeFloors: Set<string> }) {
           key={floor}
           type="button"
           disabled={!activeFloors.has(floor)}
-          onClick={() => jump(floor)}
-          className="flex h-9 min-w-11 shrink-0 items-center justify-center rounded-lg border px-2 text-sm font-medium hover:bg-muted disabled:opacity-30"
+          onClick={(e) => jump(floor, e.timeStamp)}
+          aria-label={`${floor}階へ移動`}
+          aria-current={floor === current ? "location" : undefined}
+          data-active={floor === current || undefined}
+          className={cn(floorButtonClass, "not-data-active:hover:bg-muted disabled:opacity-30")}
         >
-          {floor}F
+          {floor}
         </button>
       ))}
     </nav>
-  );
-}
-
-/** 一覧の1項目。項目全体がタップ範囲 */
-function ExhibitionListItem({
-  exhibition,
-  onSelect,
-}: {
-  exhibition: Exhibition;
-  onSelect: (exhibition: Exhibition) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(exhibition)}
-      className="flex w-full flex-col items-start gap-1 px-4 py-3 text-left transition-colors hover:bg-muted active:bg-muted"
-    >
-      <span className="font-bold">{exhibition.exhibitionName}</span>
-      <span className="text-sm text-muted-foreground">
-        {formatPlace(exhibition)}
-        <span className="mx-1.5">・</span>
-        {formatTimeRange(exhibition.startTime, exhibition.endTime)}
-      </span>
-      <GenreBadges genres={exhibition.genre} className="mt-0.5" />
-    </button>
   );
 }
 
@@ -280,8 +344,8 @@ function ExhibitionsView() {
 
   return (
     <div className="mx-auto w-full max-w-md pb-(--bottom-nav-space)">
-      <div className="space-y-3 px-4 pt-4 pb-3">
-        <h1 className="text-xl font-bold">出展一覧</h1>
+      <div className="space-y-3 px-4 pt-3 pb-3">
+        <h1 className="text-center text-2xl font-bold">出展一覧</h1>
         <input
           type="search"
           value={inputValue}
@@ -308,14 +372,24 @@ function ExhibitionsView() {
           </Button>
         </div>
       ) : (
-        groups.map((group) => (
-          <section key={group.floor} id={`floor-${group.floor}`} className="scroll-mt-14">
+        groups.map((group, i) => (
+          <section
+            key={group.floor}
+            id={`floor-${group.floor}`}
+            className={cn(
+              "scroll-mt-14",
+              // 最後の階は出展が少なくても見出しが一番上まで上がるよう、画面の高さから
+              // 階ジャンプバー（3.5rem）と下のナビゲーションバーの分を引いた高さを確保する
+              // （lvh はアドレスバーが隠れたときの高さ。どちらの状態でも上まで届く）
+              i === groups.length - 1 && "min-h-[calc(100lvh-3.5rem-var(--bottom-nav-space))]",
+            )}
+          >
             {/* スクロール中もこの階の間は上部に残る（top-14 は階ジャンプバーの高さ） */}
-            <h2 className="sticky top-14 z-10 border-b bg-muted px-4 py-1.5 text-sm font-bold">{group.floor}F</h2>
-            <ul className="divide-y">
+            <h2 className="sticky top-14 z-10 border-b bg-muted px-4 py-1.5 text-sm font-bold">{group.floor}階</h2>
+            <ul className="px-4">
               {group.items.map((item) => (
-                <li key={item.id}>
-                  <ExhibitionListItem exhibition={item} onSelect={setSelected} />
+                <li key={item.id} className="border-b last:border-b-0">
+                  <ExhibitionCard exhibition={item} onSelect={setSelected} />
                 </li>
               ))}
             </ul>
@@ -331,8 +405,8 @@ function ExhibitionsView() {
 /** 読み込み中に表示する枠 */
 function ExhibitionsFallback() {
   return (
-    <div className="mx-auto w-full max-w-md px-4 pt-4">
-      <h1 className="text-xl font-bold">出展一覧</h1>
+    <div className="mx-auto w-full max-w-md px-4 pt-3">
+      <h1 className="text-center text-2xl font-bold">出展一覧</h1>
       <p className="py-16 text-center text-sm text-muted-foreground">読み込み中…</p>
     </div>
   );

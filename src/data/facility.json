@@ -1,0 +1,11 @@
+[
+  {
+    "id": "facility-001",
+    "name": "マックスマート",
+    "floor": "5",
+    "location": "f5-smart-store-1",
+    "description": "",
+    "payments": ["クレジットカード", "交通系IC", "イオンペイ"],
+    "notes": ["現金は使えません"]
+  }
+]

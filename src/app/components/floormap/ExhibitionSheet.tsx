@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { BOTTOM_NAV_SPACE } from "@/components/BottomNav";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import ExhibitionCard from "@/components/ExhibitionCard";
 import type { Floor } from "./floors";
 import { getExhibitionsOnFloor, locationsOf, type Exhibition } from "./roomData";
 
@@ -21,13 +22,29 @@ type ExhibitionSheetProps = {
   selectedRoom: string | null;
   /** 出展をタップしたとき */
   onSelectExhibition: (exhibition: Exhibition) => void;
+  /** この値が変わるたびに、シートを一番下（見出しだけ）まで下げる */
+  collapseRequest: number;
+  /** マップを操作・拡大している間 true。マップを広く見せるため、シートを透明にして触れなくする */
+  hidden: boolean;
 };
 
 /** 表示中の階の出展一覧。マップの下からのぞかせ、引き上げると一覧が広がる */
-export default function ExhibitionSheet({ floor, selectedRoom, onSelectExhibition }: ExhibitionSheetProps) {
+export default function ExhibitionSheet({
+  floor,
+  selectedRoom,
+  onSelectExhibition,
+  collapseRequest,
+  hidden,
+}: ExhibitionSheetProps) {
   const exhibitions = getExhibitionsOnFloor(floor);
   // どの階で開いた高さかも覚えておき、階を切り替えたら閉じた状態に戻す
   const [opened, setOpened] = useState<{ floor: Floor; snap: SnapPoint } | null>(null);
+  // 下げる指示が来たら閉じた状態に戻す（React の「描画中に state を調整する」書き方）
+  const [prevCollapse, setPrevCollapse] = useState(collapseRequest);
+  if (collapseRequest !== prevCollapse) {
+    setPrevCollapse(collapseRequest);
+    setOpened(null);
+  }
   const snap = opened?.floor === floor ? opened.snap : SHEET_PEEK;
   // 最初の表示では、Base UI がシートの高さを測るまで一瞬「全部開いた位置」になる。
   // そこから閉じた位置へ動くアニメーションが見えないよう、表示が落ち着くまでアニメーションを切っておく
@@ -36,12 +53,6 @@ export default function ExhibitionSheet({ floor, selectedRoom, onSelectExhibitio
     const id = requestAnimationFrame(() => setReady(true));
     return () => cancelAnimationFrame(id);
   }, []);
-
-  function select(exhibition: Exhibition) {
-    onSelectExhibition(exhibition);
-    // モーダルを閉じたあと、選んだ教室がマップで見えるようシートを下げる
-    setOpened(null);
-  }
 
   return (
     // 常に開いたまま。マップも操作できるよう modal にせず、外側のタップでも閉じない
@@ -61,9 +72,12 @@ export default function ExhibitionSheet({ floor, selectedRoom, onSelectExhibitio
       {/* ページ（max-w-md）と同じ幅にそろえる
           --drawer-snap-point-offset（画面の下に隠れている高さ）は子要素に引き継がれないので、別の変数に移しておく */}
       <DrawerContent
+        inert={hidden}
         className={cn(
           "mx-auto max-w-md shadow-[0_-4px_16px_rgb(0_0_0/0.08)] [--sheet-hidden:var(--drawer-snap-point-offset)]",
           !ready && "transition-none",
+          // シートは元から opacity にもアニメーションがかかる
+          hidden && "pointer-events-none opacity-0",
         )}
       >
         <DrawerHeader className="flex-row items-baseline justify-between pt-3 pb-3 group-data-[swipe-axis=y]/drawer-popup:text-left">
@@ -71,36 +85,18 @@ export default function ExhibitionSheet({ floor, selectedRoom, onSelectExhibitio
           <span className="text-sm text-muted-foreground">{exhibitions.length}件</span>
         </DrawerHeader>
         {/* シートが途中の高さで止まっていても、一覧の最後まで見えるよう下に隠れている分とナビゲーションバーの分の余白を足す */}
-        <ul className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(var(--sheet-hidden)+var(--bottom-nav-space)+1rem)]">
+        {/* 閉じている（見出しだけの）間は一覧をスクロールさせない。指で動かすとシートが引き上がる */}
+        <ul
+          className={cn(
+            "min-h-0 flex-1 px-4 pb-[calc(var(--sheet-hidden)+var(--bottom-nav-space)+1rem)]",
+            snap === SHEET_PEEK ? "overflow-hidden" : "overflow-y-auto",
+          )}
+        >
           {exhibitions.map((ex) => {
-            const rooms = locationsOf(ex);
-            const selected = selectedRoom !== null && rooms.includes(selectedRoom);
+            const selected = selectedRoom !== null && locationsOf(ex).includes(selectedRoom);
             return (
               <li key={ex.id} className="border-b last:border-b-0">
-                {/* TODO: 共通の出展カードができたら置き換える */}
-                <button
-                  type="button"
-                  onClick={() => select(ex)}
-                  aria-current={selected || undefined}
-                  className={cn(
-                    "flex w-full items-start gap-3 rounded-lg px-2 py-3 text-left",
-                    selected && "bg-blue-50 dark:bg-blue-950",
-                  )}
-                >
-                  <span className="shrink-0 rounded-md bg-blue-600 px-2 py-0.5 text-sm font-bold text-white">
-                    {ex.locationName ?? (rooms.join("・") || "―")}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-bold">{ex.exhibitionName}</span>
-                    <span className="mt-1 flex flex-wrap gap-1">
-                      {ex.genre.map((g) => (
-                        <span key={g} className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                          {g}
-                        </span>
-                      ))}
-                    </span>
-                  </span>
-                </button>
+                <ExhibitionCard exhibition={ex} onSelect={onSelectExhibition} selected={selected} />
               </li>
             );
           })}

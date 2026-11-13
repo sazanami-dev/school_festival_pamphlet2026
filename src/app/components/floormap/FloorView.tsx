@@ -1,15 +1,24 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { floorButtonClass } from "@/components/floorButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ExhibitionDetailModal from "@/components/ExhibitionDetailModal";
 import ExhibitionSheet, { SHEET_PEEK } from "./ExhibitionSheet";
-import FloorMap, { FloorMapSkeleton } from "./FloorMap";
+import FloorMap, { FloorMapSkeleton, type HiddenUi } from "./FloorMap";
 import { floors, type Floor } from "./floors";
 import RoomDetailModal from "./RoomDetailModal";
-import { getRoomsOnFloor, locationsOf, type Exhibition, type RoomInfo } from "./roomData";
+import FacilityDetailModal from "./FacilityDetailModal";
+import {
+  getFacilitiesOnFloor,
+  getRoomsOnFloor,
+  locationsOf,
+  type Exhibition,
+  type Facility,
+  type RoomInfo,
+} from "./roomData";
 
 const DEFAULT_FLOOR: Floor = 1;
 // 階切替ボタンの並び（上から 8 → 1）
@@ -47,9 +56,31 @@ function FloorTabs() {
   // 一覧から出展を選んだときは listedRoom を残し、詳細を閉じると一覧に戻る
   const [listedRoom, setListedRoom] = useState<{ name: string; info: RoomInfo } | null>(null);
   const [detail, setDetail] = useState<Exhibition | null>(null);
+  // 詳細を出展一覧（ボトムシート）から開いたか。そのときだけ「マップで場所を見る」を出す
+  // （マップの教室をタップして開いたときは、すでにその教室が見えているので出さない）
+  const [detailFromSheet, setDetailFromSheet] = useState(false);
+  // 増えるたびにボトムシートを一番下まで下げる（「マップで場所を見る」でマップを見せるため）
+  const [sheetCollapse, setSheetCollapse] = useState(0);
+  // マップを操作・拡大している間は、マップを見やすくするため階ボタンとボトムシートを隠す
+  const [hiddenUi, setHiddenUi] = useState<HiddenUi>(null);
+  // 案内を開いている設備（マックスマートなど）
+  const [facility, setFacility] = useState<Facility | null>(null);
 
   // 階が変わったら、新しい階のマップをスライドさせて入れる。上の階は上から、下の階は下から入る
   // （ボタン・スワイプ・戻るボタンのどれで変わっても同じ。最初に開いたときは動かさない）
+  // 階ボタンの列がスクロールしているときは、選んでいる階のボタンが見えるようにする
+  // （階を変えたときと、イベントのお知らせが出たり消えたりして列の高さが変わったとき）
+  const floorListRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const list = floorListRef.current;
+    if (!list) return;
+    const reveal = () => list.querySelector("[data-active]")?.scrollIntoView({ block: "nearest" });
+    reveal();
+    const observer = new ResizeObserver(reveal);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [floor]);
+
   const [shown, setShown] = useState<{ floor: Floor; enterFrom: "top" | "bottom" | null }>({
     floor,
     enterFrom: null,
@@ -59,6 +90,9 @@ function FloorTabs() {
     setSelected(null);
     setListedRoom(null);
     setDetail(null);
+    setFacility(null);
+    // 新しい階のマップは等倍で表示されるので、隠していたものを戻す
+    setHiddenUi(null);
   }
 
   // ?room= が新しく指定されたら（最初に開いたときも含む）、その教室を選ぶ
@@ -87,24 +121,42 @@ function FloorTabs() {
     }
   }
 
-  /** マップの教室をタップしたとき。出展が1件だけならその詳細を、それ以外は教室の一覧を開く */
+  /** マップの教室をタップしたとき。出展が1件だけならその詳細を、それ以外は教室の一覧を開く（設備ならその案内） */
   function tapRoom(room: string | null) {
     selectRoom(room);
+    const tappedFacility = room ? getFacilitiesOnFloor(floor).get(room) : undefined;
+    if (tappedFacility) {
+      setFacility(tappedFacility);
+      return;
+    }
     const info = room ? getRoomsOnFloor(floor).get(room) : undefined;
     if (!room || !info) return;
     if (info.exhibitions.length === 1 && info.events.length === 0) {
-      setDetail(info.exhibitions[0]);
+      openDetailFromMap(info.exhibitions[0]);
     } else {
       setListedRoom({ name: info.exhibitions[0]?.locationName ?? room, info });
     }
   }
 
-  /** 出展一覧の項目をタップしたとき。教室を中央に表示して、詳細を開く */
+  /** 出展一覧の項目をタップしたとき。シートとマップはそのままで、詳細だけを開く */
   function tapExhibition(exhibition: Exhibition) {
-    const [room] = locationsOf(exhibition);
-    if (room) selectRoom(room, { center: true });
     setListedRoom(null);
     setDetail(exhibition);
+    setDetailFromSheet(true);
+  }
+
+  /** シートから開いた詳細で「マップで場所を見る」を押したとき。詳細を閉じ、シートを下げて教室を中央に表示する */
+  function showOnMap(exhibition: Exhibition) {
+    const [room] = locationsOf(exhibition);
+    if (room) selectRoom(room, { center: true });
+    setDetail(null);
+    setSheetCollapse((n) => n + 1);
+  }
+
+  /** マップの教室から詳細を開く（「マップで場所を見る」は出さない） */
+  function openDetailFromMap(exhibition: Exhibition) {
+    setDetail(exhibition);
+    setDetailFromSheet(false);
   }
 
   // 指を下に動かすと上の階へ、上に動かすと下の階へ。一番上・一番下の階では何もしない
@@ -137,17 +189,29 @@ function FloorTabs() {
       <FloorHeading floor={floor} />
       <div className="flex min-h-0 flex-1 gap-2 px-4 pb-3">
         {/* 階切替ボタンはマップの左に縦に並べる。エレベーターのように上の階ほど上 */}
-        <TabsList className="w-10 shrink-0 gap-1.5 self-center bg-transparent p-0">
+        {/* 画面が低い（Android やイベントのお知らせが出ているとき）と8個のボタンが入りきらないので、
+            列の高さはマップの枠まで（max-h-full）にし、まずボタンを低くして収める。それでも入らなければ列をスクロールする
+            （中央寄せのままだと上のボタンにスクロールで届かなくなるので上詰め。収まるときは列ごと中央に置かれる） */}
+        {/* マップを操作・拡大している間は隠す（場所は空けたままにして、マップの大きさが変わらないようにする） */}
+        <TabsList
+          ref={floorListRef}
+          inert={hiddenUi !== null}
+          className={cn(
+            "max-h-full w-10 shrink-0 justify-start gap-1.5 self-center overflow-y-auto bg-transparent p-0 transition-opacity duration-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            hiddenUi !== null && "opacity-0",
+          )}
+        >
           {floorsTopDown.map((f) => (
             <TabsTrigger
               key={f}
               value={f}
               aria-label={`${f}階`}
               className={cn(
+                floorButtonClass,
                 // tabs.tsx の縦向き用の指定（group-data-vertical/tabs:justify-start）は同じ条件付きクラスでないと上書きできない
-                "size-10 flex-none rounded-lg border-border bg-background text-base text-foreground shadow-none group-data-vertical/tabs:justify-center",
-                "data-active:border-blue-500 data-active:bg-blue-500 data-active:text-white",
-                "dark:data-active:border-blue-500 dark:data-active:bg-blue-500 dark:data-active:text-white",
+                "shadow-none group-data-vertical/tabs:justify-center",
+                // 普段は 40px の正方形。入りきらないときだけ縦に縮む（押しやすさを保てる 32px まで）
+                "h-auto min-h-8 flex-[0_1_2.5rem]",
               )}
             >
               {f}
@@ -174,18 +238,32 @@ function FloorTabs() {
                 focusRoom={selected?.center ? selected : null}
                 onSelectRoom={tapRoom}
                 onSwipe={swipeFloor}
+                hidden={hiddenUi}
+                onHiddenChange={setHiddenUi}
               />
             </TabsContent>
           ))}
         </div>
       </div>
-      <ExhibitionSheet floor={floor} selectedRoom={selectedRoom} onSelectExhibition={tapExhibition} />
+      <ExhibitionSheet
+        floor={floor}
+        selectedRoom={selectedRoom}
+        onSelectExhibition={tapExhibition}
+        collapseRequest={sheetCollapse}
+        hidden={hiddenUi !== null}
+      />
       <RoomDetailModal
         room={detail ? null : listedRoom}
         onClose={() => setListedRoom(null)}
-        onSelectExhibition={setDetail}
+        onSelectExhibition={openDetailFromMap}
       />
-      <ExhibitionDetailModal exhibition={detail} onClose={() => setDetail(null)} showMapLink={false} />
+      <ExhibitionDetailModal
+        exhibition={detail}
+        onClose={() => setDetail(null)}
+        showMapLink={detailFromSheet}
+        onShowOnMap={showOnMap}
+      />
+      <FacilityDetailModal facility={facility} onClose={() => setFacility(null)} />
     </Tabs>
   );
 }

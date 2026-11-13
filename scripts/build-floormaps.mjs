@@ -9,7 +9,7 @@ import { optimize } from "svgo";
 const ROOT = path.resolve(import.meta.dirname, "..");
 const SRC_DIR = path.join(ROOT, "assets/floormaps");
 const OUT_DIR = path.join(ROOT, "src/app/components/floormap/floors");
-const DATA_FILES = ["src/data/ExhibitionInfo.json", "src/data/event.json"];
+const DATA_FILES = ["src/data/ExhibitionInfo.json", "src/data/event.json", "src/data/facility.json"];
 
 // 残すID: 教室(T22) と 設備(f2-toilet-men-1)
 const ROOM_ID = /^T\d+$/;

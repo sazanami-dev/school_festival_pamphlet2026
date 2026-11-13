@@ -67,6 +67,7 @@ const GENRE_COLORS: Record<string, GenreColor> = {
   表彰式: { badge: "bg-lime-100 text-lime-800", dot: "bg-lime-500" },
   参加型: { badge: "bg-teal-100 text-teal-800", dot: "bg-teal-500" },
   休憩: { badge: "bg-cyan-100 text-cyan-800", dot: "bg-cyan-500" },
+  抽選: { badge: "bg-green-100 text-green-800", dot: "bg-green-500" },
 };
 
 /** 上の一覧にないジャンル（「その他」など）の色 */
@@ -100,6 +101,10 @@ export function formatPlace(item: { floor: string; location: string; locationNam
   const place = item.locationName ?? item.location.replaceAll(",", "・");
   return place ? `${item.floor}F ${place}` : `${item.floor}F`;
 }
+
+/** モーダルの一番下のボタン（「マップで場所を見る」など）。タイムテーブルの「マップで場所を見る」と同じ青・太さにする */
+export const MODAL_ACTION_CLASS =
+  "h-11 w-full bg-blue-600 text-base font-semibold text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700";
 
 /** ジャンルの数だけ色付きバッジを並べる */
 export function GenreBadges({ genres, className }: { genres: string[]; className?: string }) {
@@ -136,10 +141,15 @@ type Props = {
   onClose: () => void;
   /** 「マップで場所を見る」を出すか。マップから開くときは隠す */
   showMapLink?: boolean;
+  /**
+   * 「マップで場所を見る」を押したときの処理。マップ画面の中で開いたときに渡す
+   * （ページを移動せず、その場でマップの教室へ移動するため）。無ければマップ画面へのリンクになる
+   */
+  onShowOnMap?: (exhibition: Exhibition) => void;
 };
 
 /** 出展の詳細モーダル（画面中央に表示する） */
-export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink = true }: Props) {
+export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink = true, onShowOnMap }: Props) {
   // 閉じるアニメーションの間も中身を表示し続けるため、最後に開いた出展を覚えておく
   const [shown, setShown] = useState(exhibition);
   if (exhibition && exhibition !== shown) {
@@ -168,7 +178,7 @@ export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink
           {shown && (
             <>
               <div className="flex items-start gap-3 border-b px-4 py-3">
-                <Dialog.Title className="flex-1 pt-1 text-lg font-bold">{shown.exhibitionName}</Dialog.Title>
+                <Dialog.Title className="min-w-0 flex-1 pt-1 text-lg font-bold wrap-anywhere">{shown.exhibitionName}</Dialog.Title>
                 <Dialog.Close
                   aria-label="閉じる"
                   className="-mr-2 flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-muted"
@@ -212,13 +222,23 @@ export default function ExhibitionDetailModal({ exhibition, onClose, showMapLink
 
               {showMapLink && (
                 <div className="border-t px-4 py-3">
-                  <Link
-                    href={mapHref(shown)}
-                    onClick={onClose}
-                    className={buttonVariants({ size: "lg", className: "h-11 w-full text-base" })}
-                  >
-                    マップで場所を見る
-                  </Link>
+                  {onShowOnMap ? (
+                    <button
+                      type="button"
+                      onClick={() => onShowOnMap(shown)}
+                      className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS)}
+                    >
+                      マップで場所を見る
+                    </button>
+                  ) : (
+                    <Link
+                      href={mapHref(shown)}
+                      onClick={onClose}
+                      className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS)}
+                    >
+                      マップで場所を見る
+                    </Link>
+                  )}
                 </div>
               )}
             </>

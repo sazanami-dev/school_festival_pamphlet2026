@@ -1,7 +1,9 @@
 // マップの教室（SVGの <g id="T22">）と、出展・イベントのデータを結び付ける
 // 紐付けは「階」と「SVGのID = JSON の location」が一致するかで判定する
+import { useSyncExternalStore } from "react";
 import exhibitionData from "@/data/ExhibitionInfo.json";
 import eventData from "@/data/event.json";
+import facilityData from "@/data/facility.json";
 import type { Exhibition } from "@/components/ExhibitionDetailModal";
 import type { Floor } from "./floors";
 
@@ -23,8 +25,24 @@ export type RoomInfo = {
   events: FestivalEvent[];
 };
 
+/** facility.json の1件分（出展ではないが、タップすると案内を出す設備。マックスマートなど） */
+export type Facility = {
+  id: string;
+  name: string;
+  floor: string;
+  /** SVG の ID（例: "f5-smart-store-1"） */
+  location: string;
+  /** 説明文。空なら表示しない */
+  description: string;
+  /** 使える支払い方法 */
+  payments: string[];
+  /** 目立たせて表示する注意書き（例: 「現金は使えません」） */
+  notes: string[];
+};
+
 const exhibitions: Exhibition[] = exhibitionData;
 const events: FestivalEvent[] = eventData;
+const facilities: Facility[] = facilityData;
 
 /** "T51,T53" のように複数の場所が書かれていたら分ける */
 function splitLocation(location: string) {
@@ -61,6 +79,20 @@ export function getRoomsOnFloor(floor: Floor): ReadonlyMap<string, RoomInfo> {
   return roomIndex.get(String(floor)) ?? noRooms;
 }
 
+/** 階 → SVGのID → 設備の案内 */
+const facilityIndex = new Map<string, Map<string, Facility>>();
+for (const facility of facilities) {
+  let onFloor = facilityIndex.get(facility.floor);
+  if (!onFloor) facilityIndex.set(facility.floor, (onFloor = new Map()));
+  onFloor.set(facility.location, facility);
+}
+const noFacilities: ReadonlyMap<string, Facility> = new Map();
+
+/** その階で、タップすると案内を出す設備の一覧 */
+export function getFacilitiesOnFloor(floor: Floor): ReadonlyMap<string, Facility> {
+  return facilityIndex.get(String(floor)) ?? noFacilities;
+}
+
 /** 教室IDの順（T9 → T10 のように数字として比べる） */
 const byLocation = new Intl.Collator("ja", { numeric: true }).compare;
 
@@ -77,7 +109,7 @@ export function locationsOf(exhibition: Exhibition) {
 }
 
 /** "10:30" → 630（0時からの分） */
-function toMinutes(time: string) {
+export function toMinutes(time: string) {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
 }
@@ -97,4 +129,15 @@ export function nowInMinutes(date = new Date()) {
 /** イベントが今開催中か（開始時刻ちょうどから、終了時刻の直前まで） */
 export function isOngoing(event: FestivalEvent, now: number) {
   return toMinutes(event.startTime) <= now && now < toMinutes(event.endTime);
+}
+
+/** 30秒ごとに今の時刻（0時からの分）を知らせる */
+function subscribeClock(onChange: () => void) {
+  const id = setInterval(onChange, 30_000);
+  return () => clearInterval(id);
+}
+
+/** 今の時刻（0時からの分）。30秒ごとに更新される。サーバーでの描画中は null */
+export function useNowInMinutes() {
+  return useSyncExternalStore(subscribeClock, nowInMinutes, () => null);
 }

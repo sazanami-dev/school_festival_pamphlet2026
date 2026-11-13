@@ -5,8 +5,9 @@ import Link from "next/link";
 import { Dialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { formatTimeRange, GenreBadges } from "@/components/ExhibitionDetailModal";
-import type { Exhibition, RoomInfo } from "./roomData";
+import { formatTimeRange, GenreBadges, MODAL_ACTION_CLASS } from "@/components/ExhibitionDetailModal";
+import { cn } from "@/lib/utils";
+import { isOngoing, toMinutes, useNowInMinutes, type Exhibition, type RoomInfo } from "./roomData";
 
 type RoomDetailModalProps = {
   /** 表示する教室。null のときは閉じる */
@@ -23,6 +24,15 @@ export default function RoomDetailModal({ room, onClose, onSelectExhibition }: R
     setShown(room);
   }
 
+  // イベントは始まる順に並べ、今やっているものと次に始まるものに印を付ける（時刻はサーバーでは分からないので印なし）
+  const now = useNowInMinutes();
+  // 見出しの下に出す階（教室の出展かイベントから取る）
+  const floor = shown?.info.exhibitions[0]?.floor ?? shown?.info.events[0]?.floor;
+  const sortedEvents = [...(shown?.info.events ?? [])].sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const liveId = now === null ? null : (sortedEvents.find((ev) => isOngoing(ev, now))?.id ?? null);
+  const nextId =
+    now === null ? null : (sortedEvents.find((ev) => toMinutes(ev.startTime) > now)?.id ?? null);
+
   return (
     <Dialog.Root
       open={room !== null}
@@ -36,7 +46,10 @@ export default function RoomDetailModal({ room, onClose, onSelectExhibition }: R
           {shown && (
             <>
               <div className="flex items-start gap-3 border-b px-4 py-3">
-                <Dialog.Title className="flex-1 pt-1 text-lg font-bold">{shown.name}</Dialog.Title>
+                <div className="min-w-0 flex-1 pt-1">
+                  <Dialog.Title className="text-lg font-bold wrap-anywhere">{shown.name}</Dialog.Title>
+                  {floor && <p className="text-sm text-muted-foreground">{floor}F</p>}
+                </div>
                 <Dialog.Close
                   aria-label="閉じる"
                   className="-mr-2 flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-muted"
@@ -57,7 +70,7 @@ export default function RoomDetailModal({ room, onClose, onSelectExhibition }: R
                             onClick={() => onSelectExhibition(ex)}
                             className="block w-full px-3 py-2.5 text-left hover:bg-muted"
                           >
-                            <span className="block text-sm font-bold">{ex.exhibitionName}</span>
+                            <span className="block text-sm font-bold wrap-anywhere">{ex.exhibitionName}</span>
                             <GenreBadges genres={ex.genre} className="mt-1" />
                           </button>
                         </li>
@@ -70,13 +83,30 @@ export default function RoomDetailModal({ room, onClose, onSelectExhibition }: R
                   <section>
                     <h3 className="mb-2 text-sm font-bold">イベント（{shown.info.events.length}件）</h3>
                     <ul className="divide-y rounded-lg border text-sm">
-                      {shown.info.events.map((ev) => (
-                        <li key={ev.id} className="px-3 py-2.5">
-                          <span className="block text-muted-foreground tabular-nums">
+                      {sortedEvents.map((ev) => (
+                        <li
+                          key={ev.id}
+                          className={cn("px-3 py-3", ev.id === liveId && "bg-red-50 dark:bg-red-950")}
+                        >
+                          <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground tabular-nums">
                             {formatTimeRange(ev.startTime, ev.endTime)}
+                            {/* マップの「開催中」バッジと同じ赤。次に始まるものは青 */}
+                            {ev.id === liveId && (
+                              <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
+                                開催中
+                              </span>
+                            )}
+                            {ev.id === nextId && (
+                              <span className="rounded-full bg-blue-600 px-2 py-0.5 text-xs font-bold text-white">
+                                次
+                              </span>
+                            )}
                           </span>
-                          <span className="block font-bold">{ev.eventName}</span>
-                          <span className="mt-1 block text-xs leading-relaxed">{ev.description}</span>
+                          <span className="mt-1 block font-bold wrap-anywhere">{ev.eventName}</span>
+                          <GenreBadges genres={ev.genre} className="mt-1" />
+                          <span className="mt-1.5 block text-xs leading-relaxed text-muted-foreground">
+                            {ev.description}
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -89,7 +119,7 @@ export default function RoomDetailModal({ room, onClose, onSelectExhibition }: R
                   <Link
                     href="/timetable"
                     onClick={onClose}
-                    className={buttonVariants({ size: "lg", className: "h-11 w-full text-base" })}
+                    className={cn(buttonVariants({ size: "lg" }), MODAL_ACTION_CLASS)}
                   >
                     タイムテーブルを見る
                   </Link>
