@@ -15,8 +15,8 @@
  *   "bottom" = 画面の下に固定
  *
  * ■ 切り替え方
- *   1) 画面右下の「表示設定」ボタンから、来場者が自分で切り替え(選んだ内容はその端末に保存)
- *      来場者に選ばせたくない場合は SHOW_SWITCHER を false にしてください
+ *   1) 画面右下の「表示設定」ボタンから切り替え(選んだ内容はその端末に保存)
+ *      開発中(npm run dev)だけ表示します。本番では出ません(SHOW_SWITCHER)
  *   2) 下の「★ 設定」の定数を書き換える(初期値)
  *   3) 開発中(npm run dev)だけ URL でも指定できます
  *      ?variant=led&position=bottom&debugNow=12:50
@@ -77,8 +77,11 @@ const DEFAULT_VARIANT: Variant = "app";
 const DEFAULT_POSITION: Position = "top";
 /** position="sticky" のとき、上に固定ヘッダーがあればその高さ(px)。なければ 0 */
 const STICKY_TOP_PX = 0;
-/** 画面右下の「表示設定」ボタンを出すか(来場者がデザイン・位置を選べる) */
-const SHOW_SWITCHER = true;
+/**
+ * 画面右下の「表示設定」ボタンを出すか(デザイン・位置を選べる)
+ * 見比べるための開発用。本番(npm run build / start)では出さず、来場者には初期値のデザインを表示する
+ */
+const SHOW_SWITCHER = process.env.NODE_ENV === "development";
 
 /* -------------------------------------------------------------------------- */
 /* フォント                                                                    */
@@ -1345,7 +1348,7 @@ export function EventInfo({
           {body}
         </PositionShell>
       )}
-      {/* 切り替えUI: 来場者向けなので、イベントを表示しているときだけ出す(開発中は常に出す) */}
+      {/* 切り替えUI: 開発中だけ出す(イベントが無い時間でも試せるよう常に出す) */}
       {SHOW_SWITCHER &&
         now &&
         (body !== null || process.env.NODE_ENV === "development") && (
