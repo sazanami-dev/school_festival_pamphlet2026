@@ -17,6 +17,7 @@ import { getCurrentParticipant } from "@/lib/rally/service";
 import { cn } from "@/lib/utils";
 import { joinAction } from "./actions";
 import CardDialog from "./components/CardDialog";
+import CopyButton from "./components/CopyButton";
 import Notice from "./components/Notice";
 import StampPress from "./components/StampPress";
 import SubmitButton from "./components/SubmitButton";
@@ -378,9 +379,12 @@ function RecoveryCodeHelp() {
 function RecoveryCodeContent({ code }: { code: string }) {
   return (
     <>
-      <p className="rounded-xl bg-[#EFEFEF] py-3 text-center font-mono text-2xl font-bold tracking-widest">
-        {formatCode(code)}
-      </p>
+      <div className="space-y-2">
+        <p className="rounded-xl bg-[#EFEFEF] py-3 text-center font-mono text-2xl font-bold tracking-widest select-all">
+          {formatCode(code)}
+        </p>
+        <CopyButton text={formatCode(code)} />
+      </div>
       <p className="text-sm leading-relaxed">
         <RecoveryCodeHelp />
       </p>
@@ -394,7 +398,8 @@ function JoinedCard({ code }: { code: string }) {
     <section className="space-y-2 rounded-xl border-2 border-[#0048FF] bg-blue-50 p-4 text-blue-950 dark:bg-blue-950 dark:text-blue-50">
       <p className="font-bold">参加しました！</p>
       <h2 className="text-sm font-bold">引き継ぎコード</h2>
-      <p className="font-mono text-3xl font-bold tracking-widest">{formatCode(code)}</p>
+      <p className="font-mono text-3xl font-bold tracking-widest select-all">{formatCode(code)}</p>
+      <CopyButton text={formatCode(code)} />
       <p className="text-xs leading-relaxed">
         <strong>スクショかメモをしてください。</strong>
         <RecoveryCodeHelp />
