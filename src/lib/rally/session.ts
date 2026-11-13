@@ -1,4 +1,5 @@
 import "server-only";
+import { io } from "next/cache";
 import { cookies } from "next/headers";
 import { createSignedToken, verifySignedToken } from "./signed-token";
 
@@ -41,5 +42,8 @@ export async function setStaffCookie(now: number = Date.now()): Promise<void> {
 
 export async function isStaff(): Promise<boolean> {
   const value = (await cookies()).get(STAFF_COOKIE)?.value;
-  return value !== undefined && verifySignedToken("staff", value).status === "ok";
+  if (value === undefined) return false;
+  // 期限の判定で現在時刻を読むので、セッション単位でキャッシュされるシェルに入れず、リクエストごとに判定する
+  await io();
+  return verifySignedToken("staff", value).status === "ok";
 }
