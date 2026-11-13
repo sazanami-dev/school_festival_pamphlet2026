@@ -35,11 +35,6 @@ function floorOfRoom(room: string | null) {
   return room?.match(/^[Tf](\d)/)?.[1] ?? null;
 }
 
-//階の見出し
-function FloorHeading({ floor }: { floor: Floor }) {
-  return <h2 className="py-3 text-center text-2xl font-bold">{floor}階</h2>;
-}
-
 function FloorTabs() {
   const searchParams = useSearchParams();
   // ?room=T22 は「開いたときに強調して中央に表示する教室」の指定（出展一覧ページの「マップで場所を見る」など）
@@ -186,8 +181,7 @@ function FloorTabs() {
       className="min-h-0 flex-1 flex-col gap-0"
       style={{ paddingBottom: SHEET_PEEK }}
     >
-      <FloorHeading floor={floor} />
-      <div className="flex min-h-0 flex-1 gap-2 px-4 pb-3">
+      <div className="flex min-h-0 flex-1 gap-2 px-4 pt-3 pb-3">
         {/* 階切替ボタンはマップの左に縦に並べる。エレベーターのように上の階ほど上 */}
         {/* 画面が低い（Android やイベントのお知らせが出ているとき）と8個のボタンが入りきらないので、
             列の高さはマップの枠まで（max-h-full）にし、まずボタンを低くして収める。それでも入らなければ列をスクロールする
@@ -272,8 +266,7 @@ function FloorTabs() {
 function FloorTabsSkeleton() {
   return (
     <div className="flex min-h-0 flex-1 flex-col" style={{ paddingBottom: SHEET_PEEK }}>
-      <FloorHeading floor={DEFAULT_FLOOR} />
-      <div className="flex min-h-0 flex-1 gap-2 px-4 pb-3">
+      <div className="flex min-h-0 flex-1 gap-2 px-4 pt-3 pb-3">
         <div className="flex w-10 shrink-0 flex-col gap-1.5 self-center">
           {floorsTopDown.map((f) => (
             <div key={f} className="size-10 rounded-lg border bg-background" />
@@ -287,7 +280,7 @@ function FloorTabsSkeleton() {
   );
 }
 
-/** 階の見出し + フロアマップ + 階切替ボタン。選択中の階は URL の ?floor= に保存する */
+/** フロアマップ + 階切替ボタン。選択中の階は URL の ?floor= に保存する */
 export default function FloorView() {
   // useSearchParams を使う部分は Suspense で囲む（無いと本番ビルドが失敗する）
   return (
