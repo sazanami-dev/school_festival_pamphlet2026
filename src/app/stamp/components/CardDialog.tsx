@@ -1,33 +1,45 @@
 "use client";
 
-import { useRef } from "react";
-import { MdInfoOutline } from "react-icons/md";
+import { useId, useRef } from "react";
 
-/** スタンプカード右上の「遊び方」ボタンと、その説明を出すダイアログ */
-export default function HowToPlay({ children }: { children: React.ReactNode }) {
+/** スタンプカード右上の小さなボタン（「遊び方」「引き継ぎコード」）と、押すと出るダイアログ */
+export default function CardDialog({
+  icon,
+  label,
+  title = label,
+  children,
+}: {
+  icon: React.ReactNode;
+  /** ボタンの文字 */
+  label: string;
+  /** ダイアログの見出し。省くとボタンの文字と同じ */
+  title?: string;
+  children: React.ReactNode;
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
 
   return (
     <>
       <button
         type="button"
         onClick={() => dialogRef.current?.showModal()}
-        className="flex items-center gap-0.5 text-xs font-bold text-[#555555] active:opacity-60"
+        className="flex shrink-0 items-center gap-0.5 text-xs font-bold text-[#555555] active:opacity-60"
       >
-        <MdInfoOutline aria-hidden className="size-5" />
-        遊び方
+        {icon}
+        {label}
       </button>
 
       {/* 背景（::backdrop）を押しても閉じる */}
       <dialog
         ref={dialogRef}
-        aria-labelledby="how-to-play-title"
+        aria-labelledby={titleId}
         onClick={(e) => e.target === e.currentTarget && e.currentTarget.close()}
         className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-white p-0 text-foreground backdrop:bg-black/40"
       >
         <div className="space-y-3 p-5">
-          <h2 id="how-to-play-title" className="text-lg font-bold">
-            遊び方
+          <h2 id={titleId} className="text-lg font-bold">
+            {title}
           </h2>
           {children}
           <form method="dialog">

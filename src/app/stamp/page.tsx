@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { LuStamp } from "react-icons/lu";
-import { MdQrCodeScanner } from "react-icons/md";
+import { MdInfoOutline, MdOutlineKey, MdQrCodeScanner } from "react-icons/md";
 import { buttonVariants } from "@/components/ui/button";
 import { formatCode } from "@/lib/rally/code";
 import {
@@ -16,7 +16,7 @@ import { formatRallyHours, isRallyOpen } from "@/lib/rally/schedule";
 import { getCurrentParticipant } from "@/lib/rally/service";
 import { cn } from "@/lib/utils";
 import { joinAction } from "./actions";
-import HowToPlay from "./components/HowToPlay";
+import CardDialog from "./components/CardDialog";
 import Notice from "./components/Notice";
 import StampPress from "./components/StampPress";
 import SubmitButton from "./components/SubmitButton";
@@ -132,7 +132,15 @@ function HowToPlayContent() {
  * （どのチェックポイントのスタンプかは下の一覧で見せる）
  * justStamped（いま押したスタンプのID）があるときは、最後の1個にスタンプを押すアニメーションを付ける
  */
-function StampCard({ count, justStamped }: { count: number; justStamped?: string }) {
+function StampCard({
+  count,
+  recoveryCode,
+  justStamped,
+}: {
+  count: number;
+  recoveryCode: string;
+  justStamped?: string;
+}) {
   const required = rallyConfig.requiredStamps;
 
   return (
@@ -141,10 +149,13 @@ function StampCard({ count, justStamped }: { count: number; justStamped?: string
         <h2 id="stamp-card-title" className="-ml-2.5 text-[15px] font-bold">
           スタンプカード
         </h2>
-        <div className="-mr-1">
-          <HowToPlay>
+        <div className="-mr-1 flex items-center gap-3">
+          <CardDialog icon={<MdOutlineKey aria-hidden className="size-5" />} label="引き継ぎ" title="引き継ぎコード">
+            <RecoveryCodeContent code={recoveryCode} />
+          </CardDialog>
+          <CardDialog icon={<MdInfoOutline aria-hidden className="size-5" />} label="遊び方">
             <HowToPlayContent />
-          </HowToPlay>
+          </CardDialog>
         </div>
       </div>
       <p className="sr-only">
@@ -257,8 +268,8 @@ function JoinedView({
       <TopArea>
         {notice}
         {!open && <Notice tone="error" title={`現在は受付時間外です（${formatRallyHours()}）`} />}
-        {justJoined && <RecoveryCodeCard code={participant.recoveryCode} highlight />}
-        <StampCard count={count} justStamped={justStamped} />
+        {justJoined && <JoinedCard code={participant.recoveryCode} />}
+        <StampCard count={count} recoveryCode={participant.recoveryCode} justStamped={justStamped} />
         <div className="space-y-3 px-2">
           <Link
             href="/stamp/scan"
@@ -272,7 +283,6 @@ function JoinedView({
       </TopArea>
       <BottomArea>
         <CheckpointGrid acquired={acquired} justStamped={justStamped} />
-        {!justJoined && <RecoveryCodeCard code={participant.recoveryCode} />}
       </BottomArea>
     </div>
   );
@@ -351,26 +361,44 @@ function StampTile({
   );
 }
 
-function RecoveryCodeCard({ code, highlight = false }: { code: string; highlight?: boolean }) {
+/** 引き継ぎの説明（参加直後のカードと、スタンプカードの「引き継ぎコード」ダイアログで共通） */
+function RecoveryCodeHelp() {
   return (
-    <section
-      className={cn(
-        "space-y-2 rounded-xl border p-4",
-        highlight && "border-2 border-[#0048FF] bg-blue-50 text-blue-950 dark:bg-blue-950 dark:text-blue-50",
-      )}
-    >
-      {highlight && <p className="font-bold">参加しました！</p>}
-      <h2 className="text-sm font-bold">引き継ぎコード</h2>
-      <p className={cn("font-mono font-bold tracking-widest", highlight ? "text-3xl" : "text-xl")}>
+    <>
+      別のブラウザやアプリで開いたときは、このコードを
+      <Link href="/stamp/recover" className="underline underline-offset-2">
+        引き継ぎ画面
+      </Link>
+      に入力すると、同じスタンプを表示できます。コードをなくすと復元できません。
+    </>
+  );
+}
+
+/** 「引き継ぎコード」ダイアログの中身 */
+function RecoveryCodeContent({ code }: { code: string }) {
+  return (
+    <>
+      <p className="rounded-xl bg-[#EFEFEF] py-3 text-center font-mono text-2xl font-bold tracking-widest">
         {formatCode(code)}
       </p>
+      <p className="text-sm leading-relaxed">
+        <RecoveryCodeHelp />
+      </p>
+    </>
+  );
+}
+
+/** 参加した直後だけ上に出す、引き継ぎコードを控えてもらうためのカード */
+function JoinedCard({ code }: { code: string }) {
+  return (
+    <section className="space-y-2 rounded-xl border-2 border-[#0048FF] bg-blue-50 p-4 text-blue-950 dark:bg-blue-950 dark:text-blue-50">
+      <p className="font-bold">参加しました！</p>
+      <h2 className="text-sm font-bold">引き継ぎコード</h2>
+      <p className="font-mono text-3xl font-bold tracking-widest">{formatCode(code)}</p>
       <p className="text-xs leading-relaxed">
-        {highlight && <strong>スクショかメモをしてください。</strong>}
-        別のブラウザやアプリで開いたときは、このコードを
-        <Link href="/stamp/recover" className="underline underline-offset-2">
-          引き継ぎ画面
-        </Link>
-        に入力すると、同じスタンプを表示できます。コードをなくすと復元できません。
+        <strong>スクショかメモをしてください。</strong>
+        <RecoveryCodeHelp />
+        あとからはスタンプカード右上の「引き継ぎ」で確かめられます。
       </p>
     </section>
   );
