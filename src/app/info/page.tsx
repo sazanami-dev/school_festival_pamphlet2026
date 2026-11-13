@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { FaGithub, FaInstagram } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { MdExpandMore, MdLanguage } from "react-icons/md";
+import PageTitle from "@/components/PageTitle";
 
 export const metadata: Metadata = {
   title: "情報 | トライデント学園祭2026 デジタルパンフレット",
@@ -18,7 +19,7 @@ const CIRCLE_LINKS = [
 export default function InfoPage() {
   return (
     <div className="mx-auto w-full max-w-md space-y-5 px-4 pt-4 pb-(--bottom-nav-space)">
-      <h1 className="text-xl font-bold">情報</h1>
+      <PageTitle>情報</PageTitle>
       <AboutFestival />
       <AboutCircle />
     </div>

@@ -6,6 +6,7 @@ import eventsData from "../../data/event.json";
 import { useRouter } from "next/navigation";
 import { getGenreColor } from "@/components/ExhibitionDetailModal";
 import { cn } from "@/lib/utils";
+import PageTitle from "@/components/PageTitle";
 
 interface Event {
   id: string;
@@ -113,7 +114,7 @@ export default function Timetable() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 pb-(--bottom-nav-space)">
-      <h1 className="mb-4 text-center text-2xl font-bold">タイムテーブル</h1>
+      <PageTitle className="mb-4">タイムテーブル</PageTitle>
       {isDevelopment && !isEventDay && (
         <button
           onClick={() => setDebugMode(!debugMode)}
