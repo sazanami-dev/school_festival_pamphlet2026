@@ -343,8 +343,8 @@ function ExhibitionsView() {
 
   return (
     <div className="mx-auto w-full max-w-md pb-(--bottom-nav-space)">
-      <div className="space-y-3 px-4 pt-3 pb-3">
-        <PageTitle>出展一覧</PageTitle>
+      <div className="space-y-3 px-4 pb-3">
+        <PageTitle className="-mx-4">出展一覧</PageTitle>
         <input
           type="search"
           value={inputValue}
@@ -404,8 +404,8 @@ function ExhibitionsView() {
 /** 読み込み中に表示する枠 */
 function ExhibitionsFallback() {
   return (
-    <div className="mx-auto w-full max-w-md px-4 pt-3">
-      <PageTitle>出展一覧</PageTitle>
+    <div className="mx-auto w-full max-w-md px-4">
+      <PageTitle className="-mx-4">出展一覧</PageTitle>
       <p className="py-16 text-center text-sm text-muted-foreground">読み込み中…</p>
     </div>
   );

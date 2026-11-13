@@ -51,7 +51,9 @@ export default function RecoverForm({
         />
       </label>
       {state.error && <Notice tone="error" title={state.error} />}
-      <SubmitButton pendingLabel="確認中…">引き継ぐ</SubmitButton>
+      <SubmitButton pendingLabel="確認中…" className="bg-[#0048FF] font-bold text-white">
+        引き継ぐ
+      </SubmitButton>
     </form>
   );
 }

@@ -115,8 +115,8 @@ export default function Timetable() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6 pb-(--bottom-nav-space)">
-      <PageTitle className="mb-4">タイムテーブル</PageTitle>
+    <div className="w-full max-w-4xl mx-auto px-6 pb-(--bottom-nav-space)">
+      <PageTitle className="-mx-6 mb-4">タイムテーブル</PageTitle>
       {isDevelopment && !isEventDay && (
         <button
           onClick={() => setDebugMode(!debugMode)}

@@ -18,8 +18,8 @@ const CIRCLE_LINKS = [
 
 export default function InfoPage() {
   return (
-    <div className="mx-auto w-full max-w-md space-y-5 px-4 pt-4 pb-(--bottom-nav-space)">
-      <PageTitle>情報</PageTitle>
+    <div className="mx-auto w-full max-w-md space-y-5 px-4 pb-(--bottom-nav-space)">
+      <PageTitle className="-mx-4">情報</PageTitle>
       <AboutFestival />
       <AboutCircle />
     </div>

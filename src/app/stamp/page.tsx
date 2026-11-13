@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { LuStamp } from "react-icons/lu";
 import { MdInfoOutline, MdOutlineKey, MdQrCodeScanner } from "react-icons/md";
+import PageTitle from "@/components/PageTitle";
 import { formatCode } from "@/lib/rally/code";
 import {
   checkpointMapHref,
@@ -209,8 +210,8 @@ function CheckpointGrid({ acquired, justStamped }: { acquired: Set<string>; just
 
 function NotJoinedView({ notice }: { notice: React.ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-md space-y-4 px-4 pt-4 pb-(--bottom-nav-space)">
-      <h1 className="text-xl font-bold">スタンプラリー</h1>
+    <div className="mx-auto w-full max-w-md space-y-4 px-4 pb-(--bottom-nav-space)">
+      <PageTitle className="-mx-4">スタンプラリー</PageTitle>
       {notice}
       <section className="space-y-3 rounded-xl border p-4">
         <h2 className="font-bold">遊び方</h2>

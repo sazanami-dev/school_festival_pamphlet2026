@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import PageTitle from "@/components/PageTitle";
 import { getCurrentParticipant } from "@/lib/rally/service";
 import { recoverAction } from "../actions";
 import RecoverForm from "../components/RecoverForm";
@@ -7,8 +8,8 @@ import RecoverForm from "../components/RecoverForm";
 /** 引き継ぎ（設計書 4.4）。引き継ぎコードを入力して、このブラウザで同じスタンプを表示する */
 export default function RecoverPage() {
   return (
-    <div className="mx-auto w-full max-w-md space-y-4 px-4 pt-4 pb-(--bottom-nav-space)">
-      <h1 className="text-xl font-bold">引き継ぎ</h1>
+    <div className="mx-auto w-full max-w-md space-y-4 px-4 pb-(--bottom-nav-space)">
+      <PageTitle className="-mx-4">引き継ぎ</PageTitle>
       <p className="text-sm leading-relaxed text-muted-foreground">
         別のブラウザやアプリで参加していたときの引き継ぎコードを入力すると、同じスタンプをこのブラウザで表示できます。
       </p>
