@@ -333,7 +333,8 @@ export default function Timetable() {
               <p className="mb-1 font-semibold text-gray-700">
                 開催場所
               </p>
-              <p className="text-gray-600">
+              <p className="flex items-center gap-1 font-semibold text-gray-800">
+                <MdPlace className="shrink-0 text-blue-600" aria-hidden />
                 {selectedEvent.floor}階 {selectedEvent.location}
               </p>
             </div>
