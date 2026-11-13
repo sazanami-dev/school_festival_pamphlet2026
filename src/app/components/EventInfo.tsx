@@ -4,6 +4,7 @@
  * リアルタイム開催イベント表示(ホーム上部)
  *
  * ■ デザイン(variant)
+ *   "app"       = 案D シンプル(マップ・出展一覧と同じ見た目。2行ほどの高さでマップを狭めない)
  *   "led"       = 案A 電光掲示板(ダーク)
  *   "pop"       = 案B ポスター
  *   "timetable" = 案C 時刻表(ミニマル)
@@ -67,11 +68,11 @@ import eventData from "@/data/event.json";
 /* ★ 設定(ここを書き換える)                                                  */
 /* -------------------------------------------------------------------------- */
 
-type Variant = "led" | "pop" | "timetable";
+type Variant = "app" | "led" | "pop" | "timetable";
 type Position = "top" | "sticky" | "bottom";
 
-/** デザインの初期値: "led" = 案A / "pop" = 案B / "timetable" = 案C */
-const DEFAULT_VARIANT: Variant = "pop";
+/** デザインの初期値: "app" = 案D / "led" = 案A / "pop" = 案B / "timetable" = 案C */
+const DEFAULT_VARIANT: Variant = "app";
 /** 表示位置の初期値: "top" / "sticky" / "bottom" */
 const DEFAULT_POSITION: Position = "top";
 /** position="sticky" のとき、上に固定ヘッダーがあればその高さ(px)。なければ 0 */
@@ -153,8 +154,8 @@ const SOON_WINDOW_MIN = 15;
 const MAX_CARDS = 5;
 /** 現在時刻の更新間隔 */
 const TICK_MS = 30_000;
-/** 表示設定の保存先(localStorage) */
-const STORAGE_KEY = "eventinfo-prefs-v1";
+/** 表示設定の保存先(localStorage)。初期値を案Dに変えたので、前に保存した選択は使わないよう v2 にした */
+const STORAGE_KEY = "eventinfo-prefs-v2";
 
 const STATUS_LABEL: Record<EventStatus, string> = {
   soon: "まもなく開催",
@@ -162,6 +163,7 @@ const STATUS_LABEL: Record<EventStatus, string> = {
 };
 
 const VARIANT_OPTIONS: { value: Variant; letter: string; label: string }[] = [
+  { value: "app", letter: "D", label: "シンプル" },
   { value: "led", letter: "A", label: "電光掲示板" },
   { value: "pop", letter: "B", label: "ポスター" },
   { value: "timetable", letter: "C", label: "時刻表" },
@@ -175,6 +177,7 @@ const POSITION_OPTIONS: { value: Position; label: string }[] = [
 
 /** 設定パネルに出すデザインの見本(小さな色見本) */
 const VARIANT_SWATCH: Record<Variant, { box: string; bar: string }> = {
+  app: { box: "border-[#d4d4d4] bg-white", bar: "bg-blue-600" },
   led: { box: "border-[#2e2e3c] bg-[#0d0d12]", bar: "bg-[#ff4d4d]" },
   pop: { box: "border-2 border-[#111] bg-[#ffd60a]", bar: "bg-[#111]" },
   timetable: {
@@ -192,7 +195,7 @@ const POSITION_HINT: Record<Position, string> = {
 const NO_SCROLLBAR = "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 function isVariant(v: unknown): v is Variant {
-  return v === "led" || v === "pop" || v === "timetable";
+  return v === "app" || v === "led" || v === "pop" || v === "timetable";
 }
 
 function isPosition(v: unknown): v is Position {
@@ -373,6 +376,72 @@ function findNextEvent(events: EventItem[], nowMin: number): EventItem | null {
     .filter((ev) => toMinutes(ev.startTime) > nowMin)
     .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
   return upcoming[0] ?? null;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 案D: シンプル(マップ・出展一覧と同じ見た目)                                  */
+/* -------------------------------------------------------------------------- */
+
+/** マップ画面で、そのイベントの教室を開く(「T51,T53」のように複数あるときは最初の1つ) */
+function mapHref(ev: EventItem): string {
+  const params = new URLSearchParams({ floor: ev.floor });
+  const room = ev.location.split(",")[0].trim();
+  if (room) params.set("room", room);
+  return `/?${params.toString()}`;
+}
+
+/** 次のカードが少し見えるよう、幅は画面の 90% にする(横にスワイプできると分かるように) */
+const APP_CARD_WIDTH = "w-[90%] md:w-[320px] 2xl:w-[440px]";
+
+/** 1件分。左に場所(出展一覧と同じ青いラベル)、右にイベント名と「開催中・時間・残り時間」。タップでマップのその教室へ */
+function AppCard({ ev }: { ev: ActiveEvent }) {
+  const isLive = ev.status === "live";
+
+  return (
+    <li className={cn("shrink-0 snap-start", APP_CARD_WIDTH)}>
+      <Link
+        href={mapHref(ev)}
+        className="flex h-full items-start gap-3 rounded-lg border bg-background px-3 py-2 transition-colors hover:bg-muted active:bg-muted"
+      >
+        <span className="shrink-0 rounded-md bg-blue-600 px-2 py-0.5 text-sm font-bold text-white">
+          {ev.floor}F {ev.location.replaceAll(",", "・")}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-bold">{ev.eventName}</span>
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground tabular-nums">
+            {/* 色はマップの教室の詳細(開催中は赤)とそろえる */}
+            <span
+              className={cn(
+                "shrink-0 rounded px-1.5 py-px font-bold text-white",
+                isLive ? "bg-red-600" : "bg-orange-500",
+              )}
+            >
+              {STATUS_LABEL[ev.status]}
+            </span>
+            {/* 横幅が狭いので「12:30〜14:30」の両方は出さず、これから気にする方の時刻と残り時間だけ出す */}
+            <span className="truncate">
+              {isLive ? `${ev.endTime}まで` : `${ev.startTime}から`}・
+              <span className="font-bold text-foreground">あと{ev.minutesLeft}分</span>
+            </span>
+          </span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+function AppMoreCard({ href }: { href: string }) {
+  return (
+    <li className="shrink-0 snap-start">
+      <Link
+        href={href}
+        className="flex h-full items-center gap-1 rounded-lg border bg-background px-3 text-sm font-bold text-blue-600 transition-colors hover:bg-muted active:bg-muted"
+      >
+        タイムテーブル
+        <ArrowRight className="size-4" aria-hidden />
+      </Link>
+    </li>
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -694,6 +763,9 @@ function TableMoreColumn({ href }: { href: string }) {
 /** セクションの背景・余白・枠線(position が bottom のときは下側の線を消す) */
 function frameClass(variant: Variant, atBottom: boolean): string {
   switch (variant) {
+    case "app":
+      // 見出しも時計も出さず、カードだけを並べて低くする
+      return cn("bg-background py-2 text-foreground", !atBottom && "border-b");
     case "led":
       return "bg-[#0d0d12] pt-3.5 pb-4 text-white 2xl:pt-6 2xl:pb-6";
     case "pop":
@@ -710,12 +782,14 @@ function frameClass(variant: Variant, atBottom: boolean): string {
 }
 
 const LIST_CLASS: Record<Variant, string> = {
+  app: "scroll-px-4 gap-2 px-4 md:scroll-px-8 md:px-8",
   led: "scroll-px-4 gap-2.5 px-4 pb-0.5 md:scroll-px-8 md:gap-4 md:px-8",
   pop: "scroll-px-4 gap-3.5 px-4 pb-3 md:scroll-px-8 md:gap-5 md:px-8 2xl:pb-4",
   timetable: "scroll-pl-4 pl-4 md:scroll-pl-8 md:pl-8",
 };
 
 const ARROW_TONE: Record<Variant, string> = {
+  app: "bg-blue-600 text-white hover:bg-blue-700",
   led: "bg-[#ffc83d] text-[#0d0d12] hover:bg-[#ffc83d]/90",
   pop: "border-2 border-[#111] bg-[#111] text-[#ffd60a] hover:bg-[#111]/85",
   timetable: "bg-[#1d3cff] text-white hover:bg-[#1d3cff]/90",
@@ -742,7 +816,7 @@ function SectionFrame({
         atBottom && "shadow-[0_-4px_16px_rgba(0,0,0,0.15)]",
       )}
     >
-      <div className="mb-3.5 flex items-center justify-between px-4 md:px-8 2xl:mb-5">
+      <div className={cn("mb-3.5 flex items-center justify-between px-4 md:px-8 2xl:mb-5", variant === "app" && "hidden")}>
         {variant === "led" && (
           <>
             <h2 className="flex items-center gap-2 text-[13px] leading-5 font-bold tracking-[0.04em] text-[#d4d4e0] 2xl:text-lg">
@@ -804,12 +878,14 @@ function SectionFrame({
 }
 
 function EventItemView({ variant, ev }: { variant: Variant; ev: ActiveEvent }) {
+  if (variant === "app") return <AppCard ev={ev} />;
   if (variant === "led") return <LedCard ev={ev} />;
   if (variant === "pop") return <PopCard ev={ev} />;
   return <TableColumn ev={ev} />;
 }
 
 function MoreItemView({ variant, href }: { variant: Variant; href: string }) {
+  if (variant === "app") return <AppMoreCard href={href} />;
   if (variant === "led") return <LedMoreCard href={href} />;
   if (variant === "pop") return <PopMoreCard href={href} />;
   return <TableMoreColumn href={href} />;
@@ -934,7 +1010,9 @@ function NextStrip({
   const atBottom = position === "bottom";
 
   const tone =
-    variant === "led"
+    variant === "app"
+      ? cn("bg-background text-muted-foreground", !atBottom && "border-b")
+      : variant === "led"
       ? "bg-[#0d0d12] text-[#a9a9bb]"
       : variant === "pop"
         ? cn(
@@ -968,22 +1046,29 @@ function EventInfoSkeleton({ variant }: { variant: Variant }) {
       aria-hidden
       className={cn(
         "px-4 py-3.5 md:px-8",
+        variant === "app" && "border-b bg-background py-2",
         variant === "led" && "bg-[#0d0d12]",
         variant === "pop" && "border-y-[3px] border-[#111] bg-[#ffd60a]",
         variant === "timetable" &&
         "border-t-4 border-t-[#1d3cff] border-b border-b-[#0a0a0a] bg-white",
       )}
     >
-      <Skeleton
-        className={cn("mb-3.5 h-5 w-44", dark ? "bg-white/10" : "bg-black/10")}
-      />
-      <Skeleton
-        className={cn(
-          "h-[140px] rounded-lg",
-          dark ? "bg-white/10" : "bg-black/10",
-          POP_CARD_WIDTH,
-        )}
-      />
+      {variant === "app" ? (
+        <Skeleton className={cn("h-[3.375rem] rounded-lg bg-black/10", APP_CARD_WIDTH)} />
+      ) : (
+        <>
+          <Skeleton
+            className={cn("mb-3.5 h-5 w-44", dark ? "bg-white/10" : "bg-black/10")}
+          />
+          <Skeleton
+            className={cn(
+              "h-[140px] rounded-lg",
+              dark ? "bg-white/10" : "bg-black/10",
+              POP_CARD_WIDTH,
+            )}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -1118,7 +1203,7 @@ function DisplaySettings({
             <legend className="mb-1.5 text-xs font-medium text-muted-foreground">
               デザイン
             </legend>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {VARIANT_OPTIONS.map((o) => (
                 <Button
                   key={o.value}
