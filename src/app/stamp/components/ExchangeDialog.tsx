@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MdOutlineRedeem } from "react-icons/md";
 import QRCode from "qrcode";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { checkRedeemedAction, issueExchangeTokenAction } from "../actions";
 import Modal from "./Modal";
@@ -26,7 +25,6 @@ type Issued = { svg: string; expiresAt: number };
 export default function ExchangeDialog({
   enough,
   redeemed,
-  prizeName,
   place,
   hours,
 }: {
@@ -34,7 +32,6 @@ export default function ExchangeDialog({
   enough: boolean;
   /** 交換済みか（サーバーで読んだ値） */
   redeemed: boolean;
-  prizeName: string;
   /** 交換所（例: 「さざなみ開発（3階 3-1）」） */
   place: string;
   /** 交換の受付時間 */
@@ -110,7 +107,7 @@ export default function ExchangeDialog({
         {done ? "クーポンに交換済みです" : showing ? "交換用QRをもう一度表示する" : "スタンプをクーポンに交換する"}
       </button>
 
-      <Modal ref={dialogRef} title="景品交換">
+      <Modal ref={dialogRef} title="景品交換" closeTone="secondary">
         {justRedeemed ? (
           <Notice tone="success" title="交換しました！">
             ご参加ありがとうございました！
@@ -119,20 +116,23 @@ export default function ExchangeDialog({
           <QrView svg={issued.svg} remaining={Math.ceil((issued.expiresAt - now) / 1000)} />
         ) : (
           <>
-            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-xl border p-4 text-sm">
-              <dt className="text-muted-foreground">景品</dt>
-              <dd>{prizeName}</dd>
-              <dt className="text-muted-foreground">交換所</dt>
-              <dd>{place}</dd>
-            </dl>
+            <div className="rounded-xl border p-4">
+              <p className="text-sm text-muted-foreground">交換所</p>
+              <p className="mt-0.5 text-lg font-bold">{place}</p>
+            </div>
             <p className="text-sm leading-relaxed">
               交換所でスタッフに見せる直前に「交換する」を押してください。QRは5分で使えなくなります。
             </p>
             {expired && <Notice tone="info" title="QRの有効期限が切れました。もう一度押してください" />}
             {error && <Notice tone="error" title={error} />}
-            <Button size="lg" onClick={issue} disabled={pending} className="h-12 w-full text-base">
+            <button
+              type="button"
+              onClick={issue}
+              disabled={pending}
+              className="h-12 w-full rounded-[10px] bg-[#0048FF] font-bold text-white transition active:opacity-80 disabled:opacity-60"
+            >
               {pending ? "準備中…" : "交換する"}
-            </Button>
+            </button>
           </>
         )}
       </Modal>

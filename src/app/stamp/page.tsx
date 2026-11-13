@@ -284,7 +284,6 @@ function JoinedView({
           <ExchangeDialog
             enough={count >= rallyConfig.requiredStamps}
             redeemed={progress.redeemedAt !== null}
-            prizeName={rallyConfig.prizeName}
             place={`${rallyConfig.exchangePlace.name}（${formatFloorPlace(rallyConfig.exchangePlace)}）`}
             hours={formatRallyHours("exchange")}
           />
