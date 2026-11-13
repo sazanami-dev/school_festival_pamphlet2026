@@ -4,7 +4,8 @@
 import { useRef, useState, useEffect } from "react";
 import eventsData from "../../data/event.json";
 import { useRouter } from "next/navigation";
-import { getGenreColor } from "@/components/ExhibitionDetailModal";
+import { getGenreColor, sortGenres } from "@/components/ExhibitionDetailModal";
+import { genreChipClass } from "@/components/genreChip";
 import { MdPlace } from "react-icons/md";
 import { cn } from "@/lib/utils";
 import PageTitle from "@/components/PageTitle";
@@ -79,9 +80,9 @@ export default function Timetable() {
   const targetRef = useRef<HTMLHeadingElement | null>(null);
 
   // イベントに登録されているジャンル一覧
-  const genres = Array.from(
+  const genres = sortGenres(Array.from(
     new Set(data.flatMap((event) => event.genre))
-  );
+  ));
 
   // 現在時刻の見出しへの参照
 
@@ -114,7 +115,7 @@ export default function Timetable() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 pb-(--bottom-nav-space)">
+    <div className="w-full max-w-4xl mx-auto p-6 pb-(--bottom-nav-space)">
       <PageTitle className="mb-4">タイムテーブル</PageTitle>
       {isDevelopment && !isEventDay && (
         <button
@@ -126,29 +127,29 @@ export default function Timetable() {
             : "デバッグ：時間機能を確認"}
         </button>
       )}
-      {/* ジャンル絞り込み */}
-      <h2 className="font-bold mb-4">ジャンル絞り込み</h2>
-
-      <button
-        onClick={() => setSelectedGenre(null)}
-        className={`rounded-full px-4 py-2 mb-2 hover:scale-105 transform ${selectedGenre === null
-          ? "bg-blue-600 text-white"
-          : "bg-gray-200 text-gray-800"
-          }`}
+      {/* ジャンル絞り込み（横スクロール） */}
+      <div
+        role="group"
+        aria-label="ジャンルで絞り込み"
+        className="-mx-6 mb-4 flex gap-2 overflow-x-auto px-6 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        すべて
-      </button>
-
-      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          aria-pressed={selectedGenre === null}
+          onClick={() => setSelectedGenre(null)}
+          className={genreChipClass}
+        >
+          すべて
+        </button>
         {genres.map((genre) => (
           <button
             key={genre}
+            type="button"
+            aria-pressed={selectedGenre === genre}
             onClick={() => setSelectedGenre(genre)}
-            className={`rounded-full px-4 py-2 mb-2 hover:scale-105 transform ${selectedGenre === genre
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-800"
-              }`}
+            className={genreChipClass}
           >
+            <span aria-hidden className={cn("size-2 rounded-full", getGenreColor(genre).dot)} />
             {genre}
           </button>
         ))}
