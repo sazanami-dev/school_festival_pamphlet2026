@@ -103,11 +103,11 @@ function TopArea({ children }: { children: React.ReactNode }) {
   return <div className="mx-auto w-full max-w-md space-y-5 px-6.5 pt-3.75 pb-5">{children}</div>;
 }
 
-/** 下半分（白地）。画面の下まで白く伸ばし、ボトムナビの分だけ余白を空ける */
+/** 下半分（白地）。白いのは中身の幅だけで、PCではその外側を上と同じグレーにする。画面の下まで伸ばし、ボトムナビの分だけ余白を空ける */
 function BottomArea({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex-1 bg-white">
-      <div className="mx-auto w-full max-w-md space-y-5 px-6.5 pt-4.5 pb-(--bottom-nav-space)">{children}</div>
+    <div className="mx-auto w-full max-w-md flex-1 space-y-5 bg-white px-6.5 pt-4.5 pb-(--bottom-nav-space)">
+      {children}
     </div>
   );
 }
