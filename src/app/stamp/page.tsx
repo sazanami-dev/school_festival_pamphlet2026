@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { joinAction } from "./actions";
 import HowToPlay from "./components/HowToPlay";
 import Notice from "./components/Notice";
+import StampPress from "./components/StampPress";
 import SubmitButton from "./components/SubmitButton";
 
 /**
@@ -129,9 +130,9 @@ function HowToPlayContent() {
 /**
  * スタンプカード。枠の数は景品に必要な個数で、集めた数だけ左上から順に押していく
  * （どのチェックポイントのスタンプかは下の一覧で見せる）
- * justStamped のときは、いま押した最後の1個にスタンプを押すアニメーションを付ける
+ * justStamped（いま押したスタンプのID）があるときは、最後の1個にスタンプを押すアニメーションを付ける
  */
-function StampCard({ count, justStamped }: { count: number; justStamped: boolean }) {
+function StampCard({ count, justStamped }: { count: number; justStamped?: string }) {
   const required = rallyConfig.requiredStamps;
 
   return (
@@ -153,15 +154,13 @@ function StampCard({ count, justStamped }: { count: number; justStamped: boolean
         {Array.from({ length: required }, (_, i) => (
           <li key={i}>
             {i < count ? (
-              <div
-                className={cn(
-                  "flex size-12 items-center justify-center rounded-full bg-[#0048FF]",
-                  justStamped && i === count - 1 && "relative z-10 motion-safe:animate-stamp-press",
-                )}
+              <StampPress
+                stampId={i === count - 1 ? justStamped : undefined}
+                className="flex size-12 items-center justify-center rounded-full bg-[#0048FF]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- 小さいSVGなので最適化は不要 */}
                 <img src="/sazanami_icon.svg" alt="" className="size-8" />
-              </div>
+              </StampPress>
             ) : (
               <div className="size-12 rounded-full border border-dashed border-[#A0A0A0] bg-white" />
             )}
@@ -182,7 +181,7 @@ function CheckpointGrid({ acquired, justStamped }: { acquired: Set<string>; just
             number={index + 1}
             checkpoint={cp}
             acquired={acquired.has(cp.id)}
-            justStamped={cp.id === justStamped}
+            justStamped={cp.id === justStamped ? justStamped : undefined}
           />
         </li>
       ))}
@@ -259,7 +258,7 @@ function JoinedView({
         {notice}
         {!open && <Notice tone="error" title={`現在は受付時間外です（${formatRallyHours()}）`} />}
         {justJoined && <RecoveryCodeCard code={participant.recoveryCode} highlight />}
-        <StampCard count={count} justStamped={justStamped !== undefined} />
+        <StampCard count={count} justStamped={justStamped} />
         <div className="space-y-3 px-2">
           <Link
             href="/stamp/scan"
@@ -317,21 +316,19 @@ function StampTile({
   number: number;
   checkpoint: (typeof checkpoints)[number];
   acquired: boolean;
-  justStamped: boolean;
+  justStamped?: string;
 }) {
   const body = (
     <>
       {acquired ? (
-        <div
-          className={cn(
-            "flex size-22 items-center justify-center rounded-full bg-[#0048FF] p-1.5",
-            justStamped && "motion-safe:animate-stamp-press",
-          )}
+        <StampPress
+          stampId={justStamped}
+          className="flex size-22 items-center justify-center rounded-full bg-[#0048FF] p-1.5"
         >
           <div className="flex size-full items-center justify-center rounded-full border-2 border-white">
             <LuStamp aria-hidden className="size-12 text-white" strokeWidth={1.5} />
           </div>
-        </div>
+        </StampPress>
       ) : (
         <div className="size-22 rounded-full border-2 border-dashed border-[#A0A0A0]" />
       )}
