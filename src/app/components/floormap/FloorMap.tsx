@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { loadFloor, type Floor } from "./floors";
 import { cn } from "@/lib/utils";
+import { SHEET_PEEK } from "./ExhibitionSheet";
 import { getFacilitiesOnFloor, getRoomsOnFloor, isOngoing, useNowInMinutes, type RoomInfo } from "./roomData";
 
 const MIN_SCALE = 1;
@@ -70,7 +71,7 @@ function ZoomControls({ hidden, onPress }: { hidden: boolean; onPress: () => voi
       inert={hidden}
       onPointerDown={onPress}
       className={cn(
-        "absolute right-2 bottom-3 flex flex-col gap-1 transition-opacity duration-200",
+        "pointer-events-auto absolute right-2 bottom-3 flex flex-col gap-1 transition-opacity duration-200",
         hidden && "opacity-0",
         "[@container_floormap_(height<8rem)]:bottom-2 [@container_floormap_(height<8rem)]:flex-row",
       )}
@@ -341,22 +342,20 @@ function FloorSvg({
       onZoomStart={handleZoomStart}
       onTransform={handleTransform}
     >
-      {/* マップの枠は画面の端まで広げ、階ボタンと拡大縮小ボタンはマップに重ねる。
-          拡大したときはボタンの下までマップが広がって見える */}
-      <div className="relative size-full [container:floormap/size]">
+      {/* マップの枠は画面の端とボトムシートの裏まで広げ、階ボタンと拡大縮小ボタンはマップに重ねる。
+          拡大したときはボタンやシートの下までマップが広がって見える */}
+      <div className="relative size-full">
         <div className="size-full" onPointerDownCapture={() => press("map")}>
           <TransformComponent wrapperStyle={FILL} contentStyle={FILL}>
             {/* 枠いっぱいに広げ、縦横比を保ったまま全体が収まる大きさで中央に表示する */}
             <div
               ref={containerRef}
               // touch-none: ブラウザのスクロールや引っ張って更新を止め、指の動きをすべてマップで扱う
-              // 等倍のときはボタンに重ならないよう、左は階ボタン（left-2 + w-12）、右は拡大縮小ボタン（right-2 + size-9）の幅だけ空ける。
-              // 余白も一緒に拡大されるので、拡大するとマップがボタンの下まで広がる
-              // （ボタンを横に並べる低い枠では、右のボタンはマップの下に重なるので右を空けない）
-              className={cn(
-                "size-full touch-none py-3 pr-13 pl-16 [@container_floormap_(height<8rem)]:pr-2 [&>svg]:block [&>svg]:size-full",
-                ROOM_STYLES,
-              )}
+              // 等倍のときはボタンに重ならないよう、左は階ボタン（ml-2 + w-12）、右は拡大縮小ボタン（right-2 + size-9）の幅だけ空ける。
+              // 下はボトムシートに隠れないよう、閉じたシートの高さ（SHEET_PEEK）の分も空ける
+              // 余白も一緒に拡大されるので、拡大するとマップがボタンやシートの下まで広がる
+              className={cn("size-full touch-none pt-3 pr-13 pl-16 [&>svg]:block [&>svg]:size-full", ROOM_STYLES)}
+              style={{ paddingBottom: `calc(${SHEET_PEEK} + 0.75rem)` }}
               onPointerDown={handlePointerDown}
               onPointerUp={handlePointerUp}
               onPointerCancel={() => (tapStart.current = null)}
@@ -364,7 +363,13 @@ function FloorSvg({
             />
           </TransformComponent>
         </div>
-        <ZoomControls hidden={hidden === "all"} onPress={() => press("buttons")} />
+        {/* 拡大縮小ボタンはシートに隠れない範囲に置く。低い画面で横に並べるかは、この範囲の高さで決める */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 [container:floormap/size]"
+          style={{ bottom: SHEET_PEEK }}
+        >
+          <ZoomControls hidden={hidden === "all"} onPress={() => press("buttons")} />
+        </div>
       </div>
     </TransformWrapper>
   );

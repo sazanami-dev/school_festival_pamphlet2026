@@ -172,50 +172,55 @@ function FloorTabs() {
 
   return (
     // 縦向きのタブにすると上下の矢印キーで階を移動できる（向きの指定で横並びになるので flex-col で縦積みに戻す）
-    // 下から出ている出展一覧（ボトムシート）にマップが隠れないよう、その分の余白を空ける
     <Tabs
       value={floor}
       onValueChange={changeFloor}
       orientation="vertical"
       className="min-h-0 flex-1 flex-col gap-0"
-      style={{ paddingBottom: SHEET_PEEK }}
     >
-      {/* マップを拡大したときに広く見られるよう、マップの枠は画面の端まで広げる（余白は FloorMap の中で空ける） */}
+      {/* マップを拡大したときに広く見られるよう、マップの枠は画面の端と、下から出ている出展一覧（ボトムシート）の裏まで広げる
+          （等倍のときにボタンやシートに重ならないよう、余白は FloorMap の中で空ける） */}
       <div className="relative flex min-h-0 flex-1">
-        {/* 階切替ボタンは Google マップの階選択のように、マップの左に重ねた縦長の白い枠に並べる。エレベーターのように上の階ほど上 */}
-        {/* 画面が低い（Android やイベントのお知らせが出ているとき）と8個のボタンが入りきらないので、
-            枠の高さはマップの枠まで（max-h-full）にし、まずボタンを低くして収める。それでも入らなければ枠の中をスクロールする
-            （中央寄せのままだと上のボタンにスクロールで届かなくなるので上詰め。収まるときは枠ごと中央に置かれる） */}
-        {/* マップを操作・拡大している間は隠す */}
-        <TabsList
-          ref={floorListRef}
-          inert={hiddenUi !== null}
-          className={cn(
-            "absolute top-1/2 left-2 z-10 max-h-[calc(100%-1.5rem)] w-12 -translate-y-1/2 justify-start gap-0.5 overflow-y-auto rounded-full bg-background p-1 shadow-[0_4px_12px_rgb(0_0_0/0.2)] transition-opacity duration-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-            hiddenUi !== null && "opacity-0",
-          )}
+        {/* 階切替ボタンは、シートに隠れない範囲（シートより上）の縦の中央に置く */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center"
+          style={{ bottom: SHEET_PEEK }}
         >
-          {floorsTopDown.map((f) => (
-            <TabsTrigger
-              key={f}
-              value={f}
-              aria-label={`${f}階`}
-              className={cn(
-                "w-10 flex-none rounded-full border-none p-0 text-base font-bold text-foreground",
-                "data-active:bg-blue-700 data-active:text-white data-active:shadow-none",
-                "dark:data-active:bg-blue-700 dark:data-active:text-white",
-                // tabs.tsx の縦向き用の指定（group-data-vertical/tabs:justify-start）は同じ条件付きクラスでないと上書きできない
-                "group-data-vertical/tabs:justify-center",
-                // 普段は 40px の円。入りきらないときだけ縦に縮む（押しやすさを保てる 32px まで）
-                "h-auto min-h-8 flex-[0_1_2.5rem]",
-              )}
-            >
-              F{f}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+          {/* 階切替ボタンは Google マップの階選択のように、マップの左に重ねた縦長の白い枠に並べる。エレベーターのように上の階ほど上 */}
+          {/* 画面が低い（Android やイベントのお知らせが出ているとき）と8個のボタンが入りきらないので、
+              枠の高さはマップの枠まで（max-h-full）にし、まずボタンを低くして収める。それでも入らなければ枠の中をスクロールする
+              （中央寄せのままだと上のボタンにスクロールで届かなくなるので上詰め。収まるときは枠ごと中央に置かれる） */}
+          {/* マップを操作・拡大している間は隠す */}
+          <TabsList
+            ref={floorListRef}
+            inert={hiddenUi !== null}
+            className={cn(
+              "pointer-events-auto ml-2 max-h-[calc(100%-1.5rem)] w-12 justify-start gap-0.5 overflow-y-auto rounded-full bg-background p-1 shadow-[0_4px_12px_rgb(0_0_0/0.2)] transition-opacity duration-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+              hiddenUi !== null && "opacity-0",
+            )}
+          >
+            {floorsTopDown.map((f) => (
+              <TabsTrigger
+                key={f}
+                value={f}
+                aria-label={`${f}階`}
+                className={cn(
+                  "w-10 flex-none rounded-full border-none p-0 text-base font-bold text-foreground",
+                  "data-active:bg-blue-700 data-active:text-white data-active:shadow-none",
+                  "dark:data-active:bg-blue-700 dark:data-active:text-white",
+                  // tabs.tsx の縦向き用の指定（group-data-vertical/tabs:justify-start）は同じ条件付きクラスでないと上書きできない
+                  "group-data-vertical/tabs:justify-center",
+                  // 普段は 40px の円。入りきらないときだけ縦に縮む（押しやすさを保てる 32px まで）
+                  "h-auto min-h-8 flex-[0_1_2.5rem]",
+                )}
+              >
+                F{f}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
         {/* 残りの幅と高さをマップの枠にする。縦長のマップも全体が収まるよう縮小して表示する
-            階を切り替えるときにスライドしてくるマップが、上のお知らせやボトムシートにはみ出さないよう切り取る */}
+            階を切り替えるときにスライドしてくるマップが、上のお知らせにはみ出さないよう切り取る */}
         <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
           {floors.map((f) => (
             <TabsContent
