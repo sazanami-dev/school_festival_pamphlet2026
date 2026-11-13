@@ -104,7 +104,7 @@ export function formatPlace(item: { floor: string; location: string; locationNam
 
 /** モーダルの一番下のボタン（「マップで場所を見る」など）。タイムテーブルの「マップで場所を見る」と同じ青・太さにする */
 export const MODAL_ACTION_CLASS =
-  "h-11 w-full bg-blue-600 text-base font-semibold text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700";
+  "h-11 w-full bg-[#0048FF] text-base font-semibold text-white hover:bg-[#0048FF]/90";
 
 /** ジャンルの数だけ色付きバッジを並べる */
 export function GenreBadges({ genres, className }: { genres: string[]; className?: string }) {

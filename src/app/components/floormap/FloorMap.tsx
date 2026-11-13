@@ -107,7 +107,7 @@ function drawSelection(layer: SVGGElement, room: SVGGElement) {
   if (!shape) return;
   shape.removeAttribute("id");
   shape.setAttribute("fill", "none");
-  shape.setAttribute("stroke", "#2563eb");
+  shape.setAttribute("stroke", "#0048FF");
   shape.setAttribute("stroke-width", "4");
   layer.append(shape);
 }
@@ -137,7 +137,7 @@ function drawBadges(layer: SVGGElement, room: SVGGElement, info: RoomInfo, live:
   if (info.exhibitions.length > 0) {
     const { x: cx, y: cy } = badgeCenter(room, box, 11);
     layer.append(
-      svgElement("circle", { cx, cy, r: 11, fill: "#2563eb" }),
+      svgElement("circle", { cx, cy, r: 11, fill: "#0048FF" }),
       svgElement("text", { ...label, x: cx, y: cy, "font-size": 14 }, String(info.exhibitions.length)),
     );
   }

@@ -180,12 +180,12 @@ const POSITION_OPTIONS: { value: Position; label: string }[] = [
 
 /** 設定パネルに出すデザインの見本(小さな色見本) */
 const VARIANT_SWATCH: Record<Variant, { box: string; bar: string }> = {
-  app: { box: "border-[#d4d4d4] bg-white", bar: "bg-blue-600" },
+  app: { box: "border-[#d4d4d4] bg-white", bar: "bg-[#0048FF]" },
   led: { box: "border-[#2e2e3c] bg-[#0d0d12]", bar: "bg-[#ff4d4d]" },
   pop: { box: "border-2 border-[#111] bg-[#ffd60a]", bar: "bg-[#111]" },
   timetable: {
-    box: "border-[#d4d4d4] border-t-[3px] border-t-[#1d3cff] bg-white",
-    bar: "bg-[#1d3cff]",
+    box: "border-[#d4d4d4] border-t-[3px] border-t-[#0048FF] bg-white",
+    bar: "bg-[#0048FF]",
   },
 };
 
@@ -409,7 +409,7 @@ function AppCard({ ev }: { ev: ActiveEvent }) {
         href={mapHref(ev)}
         className={cn("flex h-full items-start gap-3 rounded-lg bg-background px-3 py-2 transition-colors hover:bg-muted active:bg-muted", APP_FLOAT_SHADOW)}
       >
-        <span className="shrink-0 rounded-md bg-blue-600 px-2 py-0.5 text-sm font-bold text-white">
+        <span className="shrink-0 rounded-md bg-[#0048FF] px-2 py-0.5 text-sm font-bold text-white">
           {ev.floor}F {ev.location.replaceAll(",", "・")}
         </span>
         <span className="min-w-0 flex-1">
@@ -441,7 +441,7 @@ function AppMoreCard({ href }: { href: string }) {
     <li className="shrink-0 snap-start">
       <Link
         href={href}
-        className={cn("flex h-full items-center gap-1 rounded-lg bg-background px-3 text-sm font-bold text-blue-600 transition-colors hover:bg-muted active:bg-muted", APP_FLOAT_SHADOW)}
+        className={cn("flex h-full items-center gap-1 rounded-lg bg-background px-3 text-sm font-bold text-[#0048FF] transition-colors hover:bg-muted active:bg-muted", APP_FLOAT_SHADOW)}
       >
         タイムテーブル
         <ArrowRight className="size-4" aria-hidden />
@@ -674,14 +674,14 @@ function TableColumn({ ev }: { ev: ActiveEvent }) {
         <span
           className={cn(
             "inline-flex items-center gap-1.5 text-xs leading-4 font-black 2xl:text-base",
-            isLive ? "text-[#1d3cff]" : "text-[#0a0a0a]",
+            isLive ? "text-[#0048FF]" : "text-[#0a0a0a]",
           )}
         >
           <span
             aria-hidden
             className={cn(
               "size-2 rounded-full",
-              isLive ? "bg-[#1d3cff]" : "border-2 border-[#0a0a0a]",
+              isLive ? "bg-[#0048FF]" : "border-2 border-[#0a0a0a]",
             )}
           />
           {STATUS_LABEL[ev.status]}
@@ -695,7 +695,7 @@ function TableColumn({ ev }: { ev: ActiveEvent }) {
             className={cn(
               numFont.className,
               "text-[76px] leading-[0.95] font-bold tracking-[-0.04em] tabular-nums 2xl:text-[112px]",
-              isLive ? "text-[#1d3cff]" : "text-[#0a0a0a]",
+              isLive ? "text-[#0048FF]" : "text-[#0a0a0a]",
             )}
           >
             {ev.minutesLeft}
@@ -713,7 +713,7 @@ function TableColumn({ ev }: { ev: ActiveEvent }) {
             aria-valuenow={Math.round(ev.progress * 100)}
           >
             <div
-              className="h-full bg-[#1d3cff] transition-[width] duration-500"
+              className="h-full bg-[#0048FF] transition-[width] duration-500"
               style={{ width: `${ev.progress * 100}%` }}
             />
           </div>
@@ -745,7 +745,7 @@ function TableMoreColumn({ href }: { href: string }) {
     <li className="w-[150px] shrink-0 snap-start pr-4 md:w-[200px] md:pr-8 2xl:w-[260px]">
       <Link
         href={href}
-        className="flex h-full min-h-[150px] flex-col justify-between gap-3 text-[#0a0a0a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d3cff]"
+        className="flex h-full min-h-[150px] flex-col justify-between gap-3 text-[#0a0a0a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0048FF]"
       >
         <span className="text-[15px] leading-[1.4] font-black 2xl:text-xl">
           タイムテーブルを
@@ -753,7 +753,7 @@ function TableMoreColumn({ href }: { href: string }) {
           すべて見る
         </span>
         <ArrowRight
-          className="size-11 text-[#1d3cff] 2xl:size-14"
+          className="size-11 text-[#0048FF] 2xl:size-14"
           strokeWidth={2.5}
           aria-hidden
         />
@@ -781,7 +781,7 @@ function frameClass(variant: Variant, atBottom: boolean): string {
       );
     case "timetable":
       return cn(
-        "border-t-4 border-t-[#1d3cff] bg-white pt-3.5 pb-4 text-[#0a0a0a] 2xl:pt-6 2xl:pb-6",
+        "border-t-4 border-t-[#0048FF] bg-white pt-3.5 pb-4 text-[#0a0a0a] 2xl:pt-6 2xl:pb-6",
         !atBottom && "border-b border-b-[#0a0a0a]",
       );
   }
@@ -796,10 +796,10 @@ const LIST_CLASS: Record<Variant, string> = {
 };
 
 const ARROW_TONE: Record<Variant, string> = {
-  app: "bg-blue-600 text-white hover:bg-blue-700",
+  app: "bg-[#0048FF] text-white hover:bg-[#0048FF]/90",
   led: "bg-[#ffc83d] text-[#0d0d12] hover:bg-[#ffc83d]/90",
   pop: "border-2 border-[#111] bg-[#111] text-[#ffd60a] hover:bg-[#111]/85",
-  timetable: "bg-[#1d3cff] text-white hover:bg-[#1d3cff]/90",
+  timetable: "bg-[#0048FF] text-white hover:bg-[#0048FF]/90",
 };
 
 function SectionFrame({
@@ -870,7 +870,7 @@ function SectionFrame({
               <span
                 className={cn(
                   numFont.className,
-                  "text-base font-bold text-[#1d3cff] 2xl:text-2xl",
+                  "text-base font-bold text-[#0048FF] 2xl:text-2xl",
                 )}
               >
                 {clock}
@@ -1027,7 +1027,7 @@ function NextStrip({
           atBottom ? "border-t-2" : "border-b-2",
         )
         : cn(
-          "border-t-4 border-t-[#1d3cff] bg-white text-[#5c5c5c]",
+          "border-t-4 border-t-[#0048FF] bg-white text-[#5c5c5c]",
           !atBottom && "border-b border-b-[#0a0a0a]",
         );
 
@@ -1062,7 +1062,7 @@ function EventInfoSkeleton({ variant }: { variant: Variant }) {
         variant === "led" && "bg-[#0d0d12]",
         variant === "pop" && "border-y-[3px] border-[#111] bg-[#ffd60a]",
         variant === "timetable" &&
-        "border-t-4 border-t-[#1d3cff] border-b border-b-[#0a0a0a] bg-white",
+        "border-t-4 border-t-[#0048FF] border-b border-b-[#0a0a0a] bg-white",
       )}
     >
       {variant === "app" ? (

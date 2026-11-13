@@ -138,7 +138,7 @@ function StampCard({ count }: { count: number }) {
         {Array.from({ length: required }, (_, i) => (
           <li key={i}>
             {i < count ? (
-              <div className="flex size-12 items-center justify-center rounded-full bg-[#0033CC]">
+              <div className="flex size-12 items-center justify-center rounded-full bg-[#0048FF]">
                 {/* eslint-disable-next-line @next/next/no-img-element -- 小さいSVGなので最適化は不要 */}
                 <img src="/sazanami_icon.svg" alt="" className="size-8" />
               </div>
@@ -188,7 +188,7 @@ function NotJoinedView({ notice }: { notice: React.ReactNode }) {
       </section>
 
       <form action={joinAction} className="space-y-2">
-        <SubmitButton pendingLabel="参加しています…" className="bg-[#0033CC] font-bold text-white">
+        <SubmitButton pendingLabel="参加しています…" className="bg-[#0048FF] font-bold text-white">
           参加する
         </SubmitButton>
         <p className="text-xs leading-relaxed text-muted-foreground">
@@ -198,7 +198,7 @@ function NotJoinedView({ notice }: { notice: React.ReactNode }) {
 
       <p className="text-center text-sm">
         別のブラウザで参加していた方は{" "}
-        <Link href="/stamp/recover" className="font-bold text-blue-700 underline underline-offset-4 dark:text-blue-400">
+        <Link href="/stamp/recover" className="font-bold text-[#0048FF] underline underline-offset-4 dark:text-blue-400">
           引き継ぎコードを入力
         </Link>
       </p>
@@ -236,7 +236,7 @@ function JoinedView({
         <div className="space-y-3 px-2">
           <Link
             href="/stamp/scan"
-            className="flex h-12.5 w-full items-center justify-center gap-2.5 rounded-[10px] bg-[#0033CC] font-bold text-white transition active:opacity-80"
+            className="flex h-12.5 w-full items-center justify-center gap-2.5 rounded-[10px] bg-[#0048FF] font-bold text-white transition active:opacity-80"
           >
             <MdQrCodeScanner aria-hidden className="size-6 text-[#E3E3E3]" />
             コードをスキャン
@@ -293,7 +293,7 @@ function StampTile({
   const body = (
     <>
       {acquired ? (
-        <div className="flex size-22 items-center justify-center rounded-full bg-[#0033CC] p-1.5">
+        <div className="flex size-22 items-center justify-center rounded-full bg-[#0048FF] p-1.5">
           <div className="flex size-full items-center justify-center rounded-full border-2 border-white">
             <LuStamp aria-hidden className="size-12 text-white" strokeWidth={1.5} />
           </div>
@@ -308,7 +308,7 @@ function StampTile({
   );
   const className = cn(
     "flex aspect-square h-full flex-col items-center justify-center rounded-[15px] border p-3 text-center",
-    acquired ? "border-[#0033CC] bg-[#E4EBFF]" : "border-dashed border-[#A0A0A0] bg-white",
+    acquired ? "border-[#0048FF] bg-[#E4EBFF]" : "border-dashed border-[#A0A0A0] bg-white",
   );
 
   return acquired ? (
@@ -325,7 +325,7 @@ function RecoveryCodeCard({ code, highlight = false }: { code: string; highlight
     <section
       className={cn(
         "space-y-2 rounded-xl border p-4",
-        highlight && "border-2 border-blue-700 bg-blue-50 text-blue-950 dark:bg-blue-950 dark:text-blue-50",
+        highlight && "border-2 border-[#0048FF] bg-blue-50 text-blue-950 dark:bg-blue-950 dark:text-blue-50",
       )}
     >
       {highlight && <p className="font-bold">参加しました！</p>}

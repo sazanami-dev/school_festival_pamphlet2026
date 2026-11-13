@@ -97,7 +97,7 @@ export default function RoomDetailModal({ room, onClose, onSelectExhibition }: R
                               </span>
                             )}
                             {ev.id === nextId && (
-                              <span className="rounded-full bg-blue-600 px-2 py-0.5 text-xs font-bold text-white">
+                              <span className="rounded-full bg-[#0048FF] px-2 py-0.5 text-xs font-bold text-white">
                                 次
                               </span>
                             )}

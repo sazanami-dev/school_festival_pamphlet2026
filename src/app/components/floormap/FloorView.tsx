@@ -206,8 +206,8 @@ function FloorTabs() {
                 aria-label={`${f}階`}
                 className={cn(
                   "w-10 flex-none rounded-full border-none p-0 text-base font-bold text-foreground",
-                  "data-active:bg-blue-700 data-active:text-white data-active:shadow-none",
-                  "dark:data-active:bg-blue-700 dark:data-active:text-white",
+                  "data-active:bg-[#0048FF] data-active:text-white data-active:shadow-none",
+                  "dark:data-active:bg-[#0048FF] dark:data-active:text-white",
                   // tabs.tsx の縦向き用の指定（group-data-vertical/tabs:justify-start）は同じ条件付きクラスでないと上書きできない
                   "group-data-vertical/tabs:justify-center",
                   // 普段は 40px の円。入りきらないときだけ縦に縮む（押しやすさを保てる 32px まで）

@@ -229,7 +229,7 @@ export default function Timetable() {
                             ? "border-gray-200 bg-white"
                             //ジャンル絞りこみ
                             : event.genre.includes(selectedGenre)
-                              ? "border-blue-500 bg-blue-100 ring-2 ring-blue-300 shadow-md"
+                              ? "border-[#0048FF] bg-blue-100 ring-2 ring-[#0048FF]/30 shadow-md"
                               : "border-gray-200 bg-gray-200 opacity-50"
                       }`}
                   >
@@ -263,7 +263,7 @@ export default function Timetable() {
                     </p>
                     {/*場所*/}
                     <p className="mt-1 flex items-center gap-1 font-semibold text-gray-800">
-                      <MdPlace className="shrink-0 text-blue-600" aria-hidden />
+                      <MdPlace className="shrink-0 text-[#0048FF]" aria-hidden />
                       {event.floor}階 {event.location}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -288,7 +288,7 @@ export default function Timetable() {
       {showTimeFeatures && (
         <button
           onClick={scrollToElement}
-          className="fixed bottom-[calc(var(--bottom-nav-space)+0.5rem)] right-6 z-40 rounded-full bg-blue-600 px-6 py-3 font-bold text-white shadow-lg transition hover:bg-blue-700 active:scale-95"
+          className="fixed bottom-[calc(var(--bottom-nav-space)+0.5rem)] right-6 z-40 rounded-full bg-[#0048FF] px-6 py-3 font-bold text-white shadow-lg transition hover:bg-[#0048FF]/90 active:scale-95"
         >
           今の時間へ
         </button>
@@ -335,7 +335,7 @@ export default function Timetable() {
                 開催場所
               </p>
               <p className="flex items-center gap-1 font-semibold text-gray-800">
-                <MdPlace className="shrink-0 text-blue-600" aria-hidden />
+                <MdPlace className="shrink-0 text-[#0048FF]" aria-hidden />
                 {selectedEvent.floor}階 {selectedEvent.location}
               </p>
             </div>
@@ -371,7 +371,7 @@ export default function Timetable() {
             <div className="flex gap-3">
               {/* マップで場所を見る */}
               <button onClick={() => handleClick(selectedEvent!)}
-                className="flex-1 rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700"
+                className="flex-1 rounded-lg bg-[#0048FF] py-3 font-semibold text-white transition hover:bg-[#0048FF]/90"
               >
                 マップで場所を見る
               </button>

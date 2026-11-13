@@ -26,7 +26,7 @@ export default function ExhibitionCard({ exhibition, onSelect, selected = false 
         selected && "bg-blue-50 hover:bg-blue-50 dark:bg-blue-950",
       )}
     >
-      <span className="shrink-0 rounded-md bg-blue-600 px-2 py-0.5 text-sm font-bold text-white">{place}</span>
+      <span className="shrink-0 rounded-md bg-[#0048FF] px-2 py-0.5 text-sm font-bold text-white">{place}</span>
       <span className="min-w-0 flex-1">
         {/* 英語の長い名前でも画面からはみ出さないよう、どこでも折り返せるようにする */}
         <span className="block font-bold wrap-anywhere">{exhibition.exhibitionName}</span>

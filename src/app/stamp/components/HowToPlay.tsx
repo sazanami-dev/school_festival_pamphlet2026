@@ -33,7 +33,7 @@ export default function HowToPlay({ children }: { children: React.ReactNode }) {
           <form method="dialog">
             <button
               type="submit"
-              className="mt-2 h-11 w-full rounded-[10px] bg-[#0033CC] text-sm font-bold text-white active:opacity-80"
+              className="mt-2 h-11 w-full rounded-[10px] bg-[#0048FF] text-sm font-bold text-white active:opacity-80"
             >
               閉じる
             </button>
