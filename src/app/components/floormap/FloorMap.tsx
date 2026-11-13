@@ -344,7 +344,12 @@ function FloorSvg({
       {/* マップの右に拡大縮小ボタンの列を置く。マップは縦長で横に余白ができやすいので、
           ボタンをマップに重ねず横に並べてもマップはほとんど小さくならない */}
       <div className="relative flex size-full gap-2 [container:floormap/size]">
-        <div className="min-w-0 flex-1" onPointerDownCapture={() => press("map")}>
+        {/* 右のボタンの列（size-9 + gap-2）と同じだけ左も空けて、マップを左右の中央に置く
+            （ボタンをマップに重ねる低い枠では空けない） */}
+        <div
+          className="min-w-0 flex-1 pl-11 [@container_floormap_(height<8rem)]:pl-0"
+          onPointerDownCapture={() => press("map")}
+        >
           <TransformComponent wrapperStyle={FILL} contentStyle={FILL}>
             {/* 枠いっぱいに広げ、縦横比を保ったまま全体が収まる大きさで中央に表示する */}
             <div
