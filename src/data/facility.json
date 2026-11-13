@@ -5,7 +5,38 @@
     "floor": "5",
     "location": "f5-smart-store-1",
     "description": "",
+    "highlights": [],
     "payments": ["クレジットカード", "交通系IC", "イオンペイ"],
     "notes": ["現金は使えません"]
+  },
+  {
+    "id": "facility-002",
+    "name": "休憩室",
+    "floor": "2",
+    "location": "T21",
+    "description": "",
+    "highlights": ["飲食できます"],
+    "payments": [],
+    "notes": []
+  },
+  {
+    "id": "facility-003",
+    "name": "休憩室",
+    "floor": "2",
+    "location": "T27",
+    "description": "",
+    "highlights": ["飲食できます"],
+    "payments": [],
+    "notes": []
+  },
+  {
+    "id": "facility-004",
+    "name": "休憩室",
+    "floor": "2",
+    "location": "T28",
+    "description": "",
+    "highlights": ["飲食できます"],
+    "payments": [],
+    "notes": []
   }
 ]
