@@ -144,7 +144,7 @@ function StampCard({
   const required = rallyConfig.requiredStamps;
 
   return (
-    <section aria-labelledby="stamp-card-title" className="rounded-[15px] bg-white px-6.25 pt-3 pb-6.25">
+    <section aria-labelledby="stamp-card-title" className="rounded-[15px] bg-white px-6.25 pt-3 pb-3">
       <div className="mb-3 flex items-center justify-between">
         <h2 id="stamp-card-title" className="-ml-2.5 text-[15px] font-bold">
           スタンプカード
@@ -158,9 +158,6 @@ function StampCard({
           </CardDialog>
         </div>
       </div>
-      <p className="sr-only">
-        {count}個 / {required}個 獲得
-      </p>
       <ul aria-hidden className="grid grid-cols-4 justify-items-center gap-4.5 rounded-[15px] bg-[#EFEFEF] px-6.75 py-5.75">
         {Array.from({ length: required }, (_, i) => (
           <li key={i}>
@@ -178,6 +175,11 @@ function StampCard({
           </li>
         ))}
       </ul>
+      <p className="mt-2 -mr-1 text-right text-[15px] font-bold">
+        <span className="sr-only">獲得したスタンプ </span>
+        {count}
+        <span className="text-[#A0A0A0]">/{required}</span>
+      </p>
     </section>
   );
 }
