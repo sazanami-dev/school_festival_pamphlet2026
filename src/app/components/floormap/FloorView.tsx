@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { floorButtonClass } from "@/components/floorButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ExhibitionDetailModal from "@/components/ExhibitionDetailModal";
 import ExhibitionSheet, { SHEET_PEEK } from "./ExhibitionSheet";
@@ -181,17 +180,17 @@ function FloorTabs() {
       className="min-h-0 flex-1 flex-col gap-0"
       style={{ paddingBottom: SHEET_PEEK }}
     >
-      <div className="flex min-h-0 flex-1 gap-2 px-4 pt-3 pb-3">
-        {/* 階切替ボタンはマップの左に縦に並べる。エレベーターのように上の階ほど上 */}
+      <div className="relative flex min-h-0 flex-1 px-4 pt-3 pb-3">
+        {/* 階切替ボタンは Google マップの階選択のように、マップの左に重ねた縦長の白い枠に並べる。エレベーターのように上の階ほど上 */}
         {/* 画面が低い（Android やイベントのお知らせが出ているとき）と8個のボタンが入りきらないので、
-            列の高さはマップの枠まで（max-h-full）にし、まずボタンを低くして収める。それでも入らなければ列をスクロールする
-            （中央寄せのままだと上のボタンにスクロールで届かなくなるので上詰め。収まるときは列ごと中央に置かれる） */}
-        {/* マップを操作・拡大している間は隠す（場所は空けたままにして、マップの大きさが変わらないようにする） */}
+            枠の高さはマップの枠まで（max-h-full）にし、まずボタンを低くして収める。それでも入らなければ枠の中をスクロールする
+            （中央寄せのままだと上のボタンにスクロールで届かなくなるので上詰め。収まるときは枠ごと中央に置かれる） */}
+        {/* マップを操作・拡大している間は隠す */}
         <TabsList
           ref={floorListRef}
           inert={hiddenUi !== null}
           className={cn(
-            "max-h-full w-10 shrink-0 justify-start gap-1.5 self-center overflow-y-auto bg-transparent p-0 transition-opacity duration-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            "absolute top-1/2 left-2 z-10 max-h-[calc(100%-1.5rem)] w-12 -translate-y-1/2 justify-start gap-0.5 overflow-y-auto rounded-full bg-background p-1 shadow-[0_4px_12px_rgb(0_0_0/0.2)] transition-opacity duration-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
             hiddenUi !== null && "opacity-0",
           )}
         >
@@ -201,14 +200,16 @@ function FloorTabs() {
               value={f}
               aria-label={`${f}階`}
               className={cn(
-                floorButtonClass,
+                "w-10 flex-none rounded-full border-none p-0 text-base font-bold text-foreground",
+                "data-active:bg-blue-700 data-active:text-white data-active:shadow-none",
+                "dark:data-active:bg-blue-700 dark:data-active:text-white",
                 // tabs.tsx の縦向き用の指定（group-data-vertical/tabs:justify-start）は同じ条件付きクラスでないと上書きできない
-                "shadow-none group-data-vertical/tabs:justify-center",
-                // 普段は 40px の正方形。入りきらないときだけ縦に縮む（押しやすさを保てる 32px まで）
+                "group-data-vertical/tabs:justify-center",
+                // 普段は 40px の円。入りきらないときだけ縦に縮む（押しやすさを保てる 32px まで）
                 "h-auto min-h-8 flex-[0_1_2.5rem]",
               )}
             >
-              {f}
+              F{f}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -266,12 +267,7 @@ function FloorTabs() {
 function FloorTabsSkeleton() {
   return (
     <div className="flex min-h-0 flex-1 flex-col" style={{ paddingBottom: SHEET_PEEK }}>
-      <div className="flex min-h-0 flex-1 gap-2 px-4 pt-3 pb-3">
-        <div className="flex w-10 shrink-0 flex-col gap-1.5 self-center">
-          {floorsTopDown.map((f) => (
-            <div key={f} className="size-10 rounded-lg border bg-background" />
-          ))}
-        </div>
+      <div className="flex min-h-0 flex-1 px-4 pt-3 pb-3">
         <div className="min-h-0 min-w-0 flex-1">
           <FloorMapSkeleton />
         </div>
