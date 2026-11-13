@@ -179,7 +179,7 @@ export default function Timetable() {
             <h2
               ref={hour === currentHour ? targetRef : null}
 
-              className="sticky top-0 z-10 bg-white py-2 mb-3 px-4 text-xl font-boldborder-solid border-l-1 border-b-2"
+              className="sticky top-2 z-10 rounded-full text-center bg-gray-200 py-1 mb-3 px-5 text-xl font-bold text-gray-700"
             >
               {hour}:00
             </h2>
