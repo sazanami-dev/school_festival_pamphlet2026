@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 export const BOTTOM_NAV_SPACE = 112;
 
 /** バーを出さない画面のパス（前方一致） */
-const HIDDEN_PATHS: string[] = ["/staff"];
+const HIDDEN_PATHS: string[] = ["/staff", "/console"];
 
 type NavItem = { href: string; label: string; icon: IconType };
 
