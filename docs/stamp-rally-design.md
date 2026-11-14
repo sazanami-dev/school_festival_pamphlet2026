@@ -31,7 +31,8 @@
 | 通常利用者 | パンフの閲覧のみ | なし（IDは発行しない） |
 | 参加者 | スタンプ取得・一覧・景品交換 | 参加ボタンで発行されるID（Cookie） |
 | 交換所スタッフ | 交換の確認・確定 | スタッフ用PIN |
-| 運営（開発者） | チェックポイント・景品の設定、QRの印刷、集計の確認 | リポジトリとDBへのアクセス |
+| 運営（開発者） | チェックポイント・景品の設定、QRの印刷 | リポジトリとDBへのアクセス |
+| 運営（管理画面） | 参加状況（集計）の確認 | 管理画面用PIN |
 
 ---
 
@@ -48,9 +49,10 @@
 | `/stamp/recover` | 引き継ぎ | 引き継ぎコードを入力して復元 |
 | `/staff` | スタッフ ログイン | PINを入力 |
 | `/staff/exchange` | 交換の確認 | 参加者の交換用QRを読み、内容を確認して「交換済みにする」 |
+| `/console` | 管理画面 | PINを入力すると参加状況（参加者数・達成者数・交換数・チェックポイントごとの獲得数・日別）が出る。日付を選ぶと（`?date=2026-11-21`）その日の分だけを集計する。数だけで、個々の参加者は出さない |
 
 - スタンプ系の画面は参加者ごとに内容が変わるので、リクエスト時に描画する（Cache Components では `connection()` 以降でDBを読む。README の「DBアクセスの注意」参照）。
-- `/staff` 配下はボトムナビを出さない（`HIDDEN_PATHS` に追加）。
+- `/staff` 配下と `/console` はボトムナビを出さない（`HIDDEN_PATHS` に追加）。
 - **Cookie の設定とDBの更新は、Server Action か Route Handler の中だけで行う**。Next.js 16 では、ページの描画中に Cookie を設定できず、描画中のDB更新も禁止されている（同梱ドキュメント `data-security.md`「Avoiding side-effects during rendering」、`cookies.md`）。ページ（Server Component）は読むだけにする。
 
 ---
@@ -179,6 +181,7 @@ GET でDBを更新することについて：
 - 正しければ署名付き Cookie（`sr_staff`、有効期限は当日中）を発行。
 - PINの失敗回数も 5.2 と同じように制限する。
 - スタッフ画面にも QR スキャナ（`/stamp/scan` と同じ部品）を使う。
+- 管理画面（`/console`）も同じ仕組みで、PINは `ADMIN_PIN`、Cookie は `sr_admin`。スタッフのPINでは管理画面に入れない（逆も同じ）。
 
 ### 5.6 開催時間
 - スタンプの取得・交換は、**開催日の 10:00〜16:00（日本時間）** だけ受け付ける。
@@ -283,7 +286,7 @@ GET でDBを更新することについて：
 
 ### 9.1 準備
 1. 企画側の決定をもとに `checkpoints.json` / `rally.json` を作る
-2. 本番の環境変数（`STAFF_PIN`, `RALLY_SECRET`, `CHECKPOINT_SECRET`, `RALLY_DATES`, `RALLY_OPEN`, `RALLY_CLOSE`）を設定する。今の `compose.prod.yaml` の `app` は `DATABASE_URL` しか渡していないので、次の作業が要る（実装時に行う）
+2. 本番の環境変数（`STAFF_PIN`, `ADMIN_PIN`, `RALLY_SECRET`, `CHECKPOINT_SECRET`, `RALLY_DATES`, `RALLY_OPEN`, `RALLY_CLOSE`）を設定する。今の `compose.prod.yaml` の `app` は `DATABASE_URL` しか渡していないので、次の作業が要る（実装時に行う）
    - `compose.prod.yaml` の `app.environment` に上の変数を追加する（値は `.env.production` から `${STAFF_PIN}` のように渡す）
    - `.env.example` に変数名と説明を追加する（値は書かない）。今の `.gitignore` では `.env.example` も無視されているので、あわせて直す
    - 開発用の `compose.yaml` にも同じ変数を追加する
@@ -353,7 +356,7 @@ GET でDBを更新することについて：
 - 引き継ぎコードをなくした参加者 → 復元はできない（個人と結びついていないため）。新しく参加してもらう。景品が軽いので許容
 
 ### 9.4 終了後
-- 集計（参加者数・チェックポイントごとの獲得数・交換数）を取って記録する。数だけで、個々の記録は残さない
+- 集計（参加者数・チェックポイントごとの獲得数・交換数）を管理画面（`/console`）で見て記録する。数だけで、個々の記録は残さない
 - 学園祭終了から一定期間（例：1か月）で participants / stamps / redemptions を削除する
 
 ---
@@ -383,4 +386,5 @@ GET でDBを更新することについて：
 | 交換 | 7個以下では交換用QRが出ない。期限切れのQRはスタッフ画面で弾かれる。2回目の交換は「交換済み」で失敗する |
 | 受付時間 | 9:59 と 16:00 以降は受け付けず、10:00 からは受け付ける（日本時間で判定できているか） |
 | スタッフ | PINなしでは `/staff/exchange` を開けない |
+| 管理画面 | PINなしでは `/console` に集計が出ない。スタッフのPINでは入れない |
 | 実機 | iOS Safari / Android Chrome / LINEアプリ内ブラウザで、上の流れを通しで確認 |
