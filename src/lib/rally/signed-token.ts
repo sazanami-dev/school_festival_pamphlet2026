@@ -3,12 +3,12 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { requireSecret } from "./env";
 
 /**
- * 有効期限つきの署名トークン（交換用QR・スタッフ Cookie で使う。設計書 5.4, 5.5）
+ * 有効期限つきの署名トークン（交換用QR・スタッフ Cookie・管理画面 Cookie で使う。設計書 5.4, 5.5）
  *
  * 形: <中身>.<期限(ミリ秒)>.<署名>
  * 署名は RALLY_SECRET の HMAC。用途（purpose）も署名に含め、別の用途のトークンを流用できないようにする
  */
-type Purpose = "exchange" | "staff";
+type Purpose = "exchange" | "staff" | "admin";
 
 export type VerifyResult = { status: "ok"; payload: string } | { status: "expired" } | { status: "invalid" };
 

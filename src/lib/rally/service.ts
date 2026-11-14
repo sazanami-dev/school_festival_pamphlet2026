@@ -17,7 +17,7 @@ import {
 } from "./participants";
 import { getClientIp, isRateLimited, recordFailure } from "./rate-limit";
 import { isRallyOpen } from "./schedule";
-import { readParticipantCookie, setParticipantCookie, setStaffCookie } from "./session";
+import { readParticipantCookie, setParticipantCookie, setRoleCookie, type PinRole } from "./session";
 import { createSignedToken, verifySignedToken } from "./signed-token";
 
 /**
@@ -148,23 +148,37 @@ export async function confirmExchange(
   return redeem(participant.id);
 }
 
-/* ---------- スタッフ ---------- */
+/* ---------- スタッフ・管理画面 ---------- */
 
-export type StaffLoginResult = { status: "ok" } | { status: "invalid" } | { status: "rate_limited" };
+export type PinLoginResult = { status: "ok" } | { status: "invalid" } | { status: "rate_limited" };
 
-export async function staffLogin(pin: string): Promise<StaffLoginResult> {
+const ROLE_PINS = {
+  staff: { secret: "STAFF_PIN", label: "スタッフ" },
+  admin: { secret: "ADMIN_PIN", label: "管理画面" },
+} as const satisfies Record<PinRole, unknown>;
+
+/** PINを確かめ、正しければその画面用の Cookie を発行する */
+async function pinLogin(role: PinRole, pin: string): Promise<PinLoginResult> {
   const ip = await getClientIp();
-  const key = `staff:${ip}`;
+  const key = `${role}:${ip}`;
   if (isRateLimited(key)) return { status: "rate_limited" };
 
   // 長さの違う値も時間一定で比べられるよう、ハッシュにしてから比べる
   const digest = (value: string) => createHash("sha256").update(value).digest();
-  if (!timingSafeEqual(digest(pin.trim()), digest(requireSecret("STAFF_PIN")))) {
+  if (!timingSafeEqual(digest(pin.trim()), digest(requireSecret(ROLE_PINS[role].secret)))) {
     recordFailure(key);
-    console.info(`[rally] スタッフPINの不一致 ip=${ip}`);
+    console.info(`[rally] ${ROLE_PINS[role].label}PINの不一致 ip=${ip}`);
     return { status: "invalid" };
   }
 
-  await setStaffCookie();
+  await setRoleCookie(role);
   return { status: "ok" };
+}
+
+export async function staffLogin(pin: string): Promise<PinLoginResult> {
+  return pinLogin("staff", pin);
+}
+
+export async function adminLogin(pin: string): Promise<PinLoginResult> {
+  return pinLogin("admin", pin);
 }
