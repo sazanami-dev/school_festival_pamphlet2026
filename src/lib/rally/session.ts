@@ -11,6 +11,7 @@ import { createSignedToken, verifySignedToken } from "./signed-token";
 const PARTICIPANT_COOKIE = "sr_pid";
 const PARTICIPANT_MAX_AGE = 30 * 24 * 60 * 60;
 const STAFF_COOKIE = "sr_staff";
+const ADMIN_COOKIE = "sr_admin";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
@@ -31,19 +32,32 @@ export async function setParticipantCookie(participantId: string): Promise<void>
   (await cookies()).set(PARTICIPANT_COOKIE, participantId, { ...baseCookieOptions, maxAge: PARTICIPANT_MAX_AGE });
 }
 
-/** スタッフ Cookie を発行する。有効期限は当日中（日本時間の24時まで） */
-export async function setStaffCookie(now: number = Date.now()): Promise<void> {
+/** PINで入る画面の種類。スタッフ（交換所）と管理画面で Cookie と署名の用途を分ける */
+export type PinRole = "staff" | "admin";
+
+const ROLE_COOKIES: Record<PinRole, string> = { staff: STAFF_COOKIE, admin: ADMIN_COOKIE };
+
+/** スタッフ／管理画面の Cookie を発行する。有効期限は当日中（日本時間の24時まで） */
+export async function setRoleCookie(role: PinRole, now: number = Date.now()): Promise<void> {
   const endOfDay = Math.floor((now + JST_OFFSET_MS) / DAY_MS) * DAY_MS + DAY_MS - JST_OFFSET_MS;
-  (await cookies()).set(STAFF_COOKIE, createSignedToken("staff", "1", endOfDay), {
+  (await cookies()).set(ROLE_COOKIES[role], createSignedToken(role, "1", endOfDay), {
     ...baseCookieOptions,
     maxAge: Math.floor((endOfDay - now) / 1000),
   });
 }
 
-export async function isStaff(): Promise<boolean> {
-  const value = (await cookies()).get(STAFF_COOKIE)?.value;
+async function hasRole(role: PinRole): Promise<boolean> {
+  const value = (await cookies()).get(ROLE_COOKIES[role])?.value;
   if (value === undefined) return false;
   // 期限の判定で現在時刻を読むので、セッション単位でキャッシュされるシェルに入れず、リクエストごとに判定する
   await io();
-  return verifySignedToken("staff", value).status === "ok";
+  return verifySignedToken(role, value).status === "ok";
+}
+
+export async function isStaff(): Promise<boolean> {
+  return hasRole("staff");
+}
+
+export async function isAdmin(): Promise<boolean> {
+  return hasRole("admin");
 }

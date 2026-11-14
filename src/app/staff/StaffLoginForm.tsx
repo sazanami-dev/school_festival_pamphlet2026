@@ -3,10 +3,13 @@
 import { useActionState } from "react";
 import Notice from "@/app/stamp/components/Notice";
 import SubmitButton from "@/app/stamp/components/SubmitButton";
-import { staffLoginAction } from "./actions";
+import { staffLoginAction, type LoginState } from "./actions";
 
-export default function StaffLoginForm() {
-  const [state, formAction] = useActionState(staffLoginAction, {});
+type LoginAction = (prev: LoginState, formData: FormData) => Promise<LoginState>;
+
+/** PINの入力欄。管理画面（/console）でも action を差し替えて使う */
+export default function StaffLoginForm({ action = staffLoginAction }: { action?: LoginAction }) {
+  const [state, formAction] = useActionState(action, {});
   return (
     <form action={formAction} className="space-y-3">
       <label className="block space-y-1.5">

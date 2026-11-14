@@ -6,12 +6,13 @@ import "server-only";
  * 本番で未設定ならエラーにする。開発中は毎回設定しなくても動くよう、固定の仮の値を使う
  * （仮の値で作ったQRは本番では無効になる）。
  */
-type SecretName = "RALLY_SECRET" | "CHECKPOINT_SECRET" | "STAFF_PIN";
+type SecretName = "RALLY_SECRET" | "CHECKPOINT_SECRET" | "STAFF_PIN" | "ADMIN_PIN";
 
 const DEV_FALLBACKS: Record<SecretName, string> = {
   RALLY_SECRET: "dev-rally-secret",
   CHECKPOINT_SECRET: "dev-checkpoint-secret",
   STAFF_PIN: "0000",
+  ADMIN_PIN: "0000",
 };
 
 const warned = new Set<SecretName>();
